@@ -60,26 +60,10 @@ impl From<IngredientPart> for Element {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Process {
-    Raw,
-    Cut,
-    Infuse,
-    Ferment,
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Kind {
     Herb,
     Mushroom,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Infusion {
-    AetherEarth,
-    EarthAether,
-    FireWater,
-    WaterFire,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -229,40 +213,6 @@ pub struct Recipe {
     pub potion_kind: PotionKind,
     pub ingredients: Vec<Ingredient>,
 }
-
-// Custom indexing for known sets
-pub static MAIN_EFFECTS: [IngredientPart; 4] = [
-    IngredientPart::MainEffect(MainEffect::Cat),
-    IngredientPart::MainEffect(MainEffect::Bone),
-    IngredientPart::MainEffect(MainEffect::Soul),
-    IngredientPart::MainEffect(MainEffect::Beast),
-];
-
-pub static ELEMENTS: [IngredientPart; 4] = [
-    IngredientPart::Element(Element::Fire),
-    IngredientPart::Element(Element::Aether),
-    IngredientPart::Element(Element::Water),
-    IngredientPart::Element(Element::Earth),
-];
-
-pub static INFUSIONS: [(IngredientPart, IngredientPart); 4] = [
-    (
-        IngredientPart::Element(Element::Aether),
-        IngredientPart::Element(Element::Earth),
-    ),
-    (
-        IngredientPart::Element(Element::Earth),
-        IngredientPart::Element(Element::Aether),
-    ),
-    (
-        IngredientPart::Element(Element::Fire),
-        IngredientPart::Element(Element::Water),
-    ),
-    (
-        IngredientPart::Element(Element::Water),
-        IngredientPart::Element(Element::Fire),
-    ),
-];
 
 pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
     (
@@ -719,12 +669,6 @@ impl GetByKey<PotionKindKey, PotionKind> for [(PotionKindKey, PotionKind); 16] {
         }
     }
 }
-
-pub static DEPARTMENT_NAMES: [(Department, &'static str); 3] = [
-    (Department::Health, "Health"),
-    (Department::Sourcery, "Sourcery"),
-    (Department::Provisions, "Provisions"),
-];
 
 impl GetByKey<Department, &'static str> for [(Department, &'static str); 3] {
     fn get_by_key(&self, key: Department) -> &&'static str {
