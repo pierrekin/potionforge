@@ -1,7 +1,7 @@
 use crate::models::{Ingredient, Recipe};
 use crate::simulate;
 use console::style;
-use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
+use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use std::ops::Range;
 use std::sync::Mutex;

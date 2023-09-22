@@ -10,5 +10,5 @@ fn main() {
         4,
     );
 
-    let all_recommendations = recommend::recommend(all_recipes);
+    let _all_recommendations = recommend::recommend(all_recipes);
 }
