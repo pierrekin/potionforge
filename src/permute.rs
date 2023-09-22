@@ -1,11 +1,11 @@
-use crate::models::{Ingredient, Recipe, INGREDIENTS_VALUES};
+use crate::models::{Ingredient, Recipe};
 use crate::simulate;
-use itertools::Itertools;
-use linya::{Bar, Progress};
+use console::style;
+use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use std::sync::Mutex;
 
-const SIMULATE_SUBRANGE_SIZE: usize = 10_000;
+const SIMULATE_SUBRANGE_SIZE: usize = 5_000;
 
 pub fn permute_ingredient(
     ingredient: &Ingredient,
@@ -73,29 +73,26 @@ pub fn get_all_recipes(
     processes: Vec<&str>,
     r: usize,
 ) -> Vec<Recipe> {
-    dbg!(raw_ingredients.len(), r);
+    println!(
+        "{} Permuting ingredients...",
+        style(format!("[1/{}]", r)).bold().dim(),
+    );
     let all_ingredients = permute_ingredients(raw_ingredients, processes);
-    dbg!(all_ingredients.len());
-
-    let total_tasks: usize = (2..=r)
-        .map(|k| binomial_coefficient(all_ingredients.len(), k))
-        .sum();
-
-    println!("Total recipes to simulate: {total_tasks}");
-
-    let progress = Mutex::new(Progress::new());
 
     let all_recipes: Vec<_> = (2..=r)
         .flat_map(|k| {
+            println!("{} Simulating recipes k={}...", style(format!("[{}/{}]", k-1, r)).bold().dim(), k);
+
             let total_combinations = binomial_coefficient(all_ingredients.len(), k);
-            let bar: Bar = progress
-                .lock()
-                .unwrap()
-                .bar(total_combinations, format!("k={} / {}", k, r));
-            progress
-                .lock()
-                .unwrap()
-                .inc_and_draw(&bar, SIMULATE_SUBRANGE_SIZE);
+            let progress = Mutex::new(ProgressBar::new(total_combinations as u64));
+            progress.lock().unwrap().set_style(
+                ProgressStyle::default_bar()
+                    .template(
+                        "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta_precise}) {msg}",
+                    )
+                    .unwrap()
+                    .progress_chars("#>-"),
+            );
 
             let num_subranges = total_combinations / SIMULATE_SUBRANGE_SIZE;
 
@@ -106,7 +103,7 @@ pub fn get_all_recipes(
             let k_recipes: Vec<_> = subranges
                 .into_par_iter()
                 .map(|range| {
-                    progress.lock().unwrap().inc_and_draw(&bar, range.len());
+                    progress.lock().unwrap().inc(range.len() as u64);
                     range
                         .filter_map(|index| {
                             let combination = generate_combination(&all_ingredients, k, index);
@@ -116,6 +113,8 @@ pub fn get_all_recipes(
                 })
                 .flatten()
                 .collect();
+
+            progress.lock().unwrap().finish_and_clear();
 
             k_recipes
         })
