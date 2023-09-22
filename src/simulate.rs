@@ -1,6 +1,6 @@
 use crate::models::{
     self, Element, GetByParts, Ingredient, IngredientPart, IngredientParts, IngredientProcess,
-    MainEffect, Recipe,
+    MainEffect, Recipe, ValidCombination,
 };
 
 pub fn process_cut(ingredient: &Ingredient) -> Option<Vec<Ingredient>> {
@@ -265,14 +265,13 @@ pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
         return None;
     }
 
-    match (main_effect, element) {
-        (Some(me), Some(el)) => {
-            let potion_kind = models::POTION_KINDS.get_by_parts(me.clone(), el.clone());
-            Some(Recipe {
-                potion_kind: potion_kind.clone(),
-                ingredients: ingredients.to_vec(),
-            })
-        }
-        _ => None,
-    }
+    // Safe to unwrap due to checks above.
+    let valid_combination =
+        ValidCombination::new(*main_effect.unwrap(), *element.unwrap()).unwrap();
+    let potion_kind = models::POTION_KINDS.get_by_parts(valid_combination);
+
+    Some(Recipe {
+        potion_kind: potion_kind.clone(),
+        ingredients: ingredients.to_vec(),
+    })
 }

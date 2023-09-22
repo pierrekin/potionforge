@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum IngredientPart {
     MainEffect(MainEffect),
     Element(Element),
@@ -16,7 +14,7 @@ pub enum IngredientPart {
     Antitoxin,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum MainEffect {
     Cat,
     Bone,
@@ -24,7 +22,7 @@ pub enum MainEffect {
     Beast,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Element {
     Fire,
     Aether,
@@ -639,30 +637,38 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
 ];
 
 pub trait GetByParts {
-    fn get_by_parts(&self, main_effect: MainEffect, element: Element) -> &PotionKind;
+    fn get_by_parts(&self, valid_combination: ValidCombination) -> &PotionKind;
 }
 
 impl GetByParts for [(PotionKindKey, PotionKind); 16] {
-    fn get_by_parts(&self, main_effect: MainEffect, element: Element) -> &PotionKind {
-        match (main_effect, element) {
-            (MainEffect::Cat, Element::Fire) => &self[0].1,
-            (MainEffect::Cat, Element::Water) => &self[1].1,
-            (MainEffect::Bone, Element::Fire) => &self[2].1,
-            (MainEffect::Bone, Element::Water) => &self[3].1,
-            (MainEffect::Soul, Element::Fire) => &self[4].1,
-            (MainEffect::Soul, Element::Water) => &self[5].1,
-            (MainEffect::Beast, Element::Fire) => &self[6].1,
-            (MainEffect::Beast, Element::Water) => &self[7].1,
-            (MainEffect::Cat, Element::Aether) => &self[8].1,
-            (MainEffect::Cat, Element::Earth) => &self[9].1,
-            (MainEffect::Bone, Element::Aether) => &self[10].1,
-            (MainEffect::Bone, Element::Earth) => &self[11].1,
-            (MainEffect::Soul, Element::Aether) => &self[12].1,
-            (MainEffect::Soul, Element::Earth) => &self[13].1,
-            (MainEffect::Beast, Element::Aether) => &self[14].1,
-            (MainEffect::Beast, Element::Earth) => &self[15].1,
-            _ => unreachable!(),
+    fn get_by_parts(&self, valid_combination: ValidCombination) -> &PotionKind {
+        match valid_combination {
+            ValidCombination(MainEffect::Cat, Element::Fire) => &self[0].1,
+            ValidCombination(MainEffect::Cat, Element::Water) => &self[1].1,
+            ValidCombination(MainEffect::Bone, Element::Fire) => &self[2].1,
+            ValidCombination(MainEffect::Bone, Element::Water) => &self[3].1,
+            ValidCombination(MainEffect::Soul, Element::Fire) => &self[4].1,
+            ValidCombination(MainEffect::Soul, Element::Water) => &self[5].1,
+            ValidCombination(MainEffect::Beast, Element::Fire) => &self[6].1,
+            ValidCombination(MainEffect::Beast, Element::Water) => &self[7].1,
+            ValidCombination(MainEffect::Cat, Element::Aether) => &self[8].1,
+            ValidCombination(MainEffect::Cat, Element::Earth) => &self[9].1,
+            ValidCombination(MainEffect::Bone, Element::Aether) => &self[10].1,
+            ValidCombination(MainEffect::Bone, Element::Earth) => &self[11].1,
+            ValidCombination(MainEffect::Soul, Element::Aether) => &self[12].1,
+            ValidCombination(MainEffect::Soul, Element::Earth) => &self[13].1,
+            ValidCombination(MainEffect::Beast, Element::Aether) => &self[14].1,
+            ValidCombination(MainEffect::Beast, Element::Earth) => &self[15].1,
         }
+    }
+}
+
+pub struct ValidCombination(MainEffect, Element);
+
+impl ValidCombination {
+    pub fn new(main_effect: MainEffect, element: Element) -> Result<Self, &'static str> {
+        // Validate the combination here, if needed
+        Ok(ValidCombination(main_effect, element))
     }
 }
 
@@ -687,7 +693,6 @@ impl GetByKey<IngredientKey, Ingredient> for [(IngredientKey, Ingredient); 14] {
             IngredientKey::Pluteus => &self[11].1,
             IngredientKey::Wizards => &self[12].1,
             IngredientKey::Asporeus => &self[13].1,
-            _ => unreachable!(),
         }
     }
 }
@@ -711,7 +716,6 @@ impl GetByKey<PotionKindKey, PotionKind> for [(PotionKindKey, PotionKind); 16] {
             PotionKindKey::Sleep => &self[13].1,
             PotionKindKey::Summoning => &self[14].1,
             PotionKindKey::Monster => &self[15].1,
-            _ => unreachable!(),
         }
     }
 }
