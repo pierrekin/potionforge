@@ -16,3 +16,4 @@ indicatif = "0.17.6"
 console = { version = "0.15", default-features = false, features = [
     "ansi-parsing",
 ] }
+coin_cbc = "0.1.8"
