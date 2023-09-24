@@ -1,4 +1,4 @@
-use crate::models::{Ingredient, Recipe};
+use crate::models::{GetByKey, Ingredient, IngredientKey, Recipe, INGREDIENTS};
 use crate::simulate;
 use console::style;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -100,12 +100,17 @@ fn solve_subrange(range: Range<usize>, all_ingredients: &[Ingredient], k: usize)
 }
 
 pub fn get_all_recipes(
-    raw_ingredients: &[&Ingredient],
+    raw_ingredients: Vec<&IngredientKey>,
     processes: Vec<&str>,
     r: usize,
 ) -> Vec<Recipe> {
     report_progress(1, r, "Permuting ingredients...");
-    let all_ingredients = permute_ingredients(raw_ingredients, processes);
+    let raw_ingredients: Vec<_> = raw_ingredients
+        .iter()
+        .map(|key| INGREDIENTS.get_by_key(key))
+        .collect();
+
+    let all_ingredients = permute_ingredients(raw_ingredients.as_slice(), processes);
 
     let all_recipes: Vec<_> = (2..=r)
         .flat_map(|k| {

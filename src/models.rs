@@ -1,16 +1,15 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum IngredientPart {
     MainEffect(MainEffect),
     Element(Element),
+    Taste(Taste),
     Stimulant,
     Impurity,
-    Tasty,
     Toxin,
-    Unsavory,
-    Bitter,
-    Sweet,
     Antitoxin,
 }
 
@@ -28,6 +27,24 @@ pub enum Element {
     Aether,
     Water,
     Earth,
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum Taste {
+    Tastiness(Tastiness),
+    Sweetness(Sweetness),
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum Tastiness {
+    Tasty,
+    Unsavory,
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum Sweetness {
+    Bitter,
+    Sweet,
 }
 
 impl From<MainEffect> for IngredientPart {
@@ -73,7 +90,7 @@ pub enum Department {
     Provisions,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum IngredientKey {
     Catnip,
     Lupine,
@@ -200,19 +217,117 @@ pub enum PotionKindKey {
     Summoning,
     Monster,
 }
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum ToxicityEffect {
+    ToxicPositive,
+    ToxicNegative,
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum TasteEffect {
+    TastyPositive,
+    TastyNeutral,
+    TastyNegative,
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum OverallTaste {
+    Tasty,
+    Flavorful,
+    Bitter,
+    Foul,
+    Unsavory,
+    Icky,
+    Sweet,
+    Delicious,
+    Bland,
+}
+
+pub static APPEAL_MAP_POSITIVE: [(OverallTaste, i32); 9] = [
+    (OverallTaste::Tasty, 5),
+    (OverallTaste::Flavorful, 15),
+    (OverallTaste::Bitter, 5),
+    (OverallTaste::Foul, -20),
+    (OverallTaste::Unsavory, -10),
+    (OverallTaste::Icky, -20),
+    (OverallTaste::Sweet, 5),
+    (OverallTaste::Delicious, 15),
+    (OverallTaste::Bland, 0),
+];
+
+pub static APPEAL_MAP_NEGATIVE: [(OverallTaste, i32); 9] = [
+    (OverallTaste::Tasty, -10),
+    (OverallTaste::Flavorful, -20),
+    (OverallTaste::Bitter, 5),
+    (OverallTaste::Foul, 15),
+    (OverallTaste::Unsavory, 5),
+    (OverallTaste::Icky, 15),
+    (OverallTaste::Sweet, -10),
+    (OverallTaste::Delicious, -20),
+    (OverallTaste::Bland, 0),
+];
+
+pub struct AppealMapPositive;
+pub struct AppealMapNegative;
+
+pub trait AppealLookup {
+    fn get_appeal(&self, overall_taste: OverallTaste, taste_effect: TasteEffect) -> i32;
+}
+
+impl AppealLookup for AppealMapPositive {
+    fn get_appeal(&self, overall_taste: OverallTaste, taste_effect: TasteEffect) -> i32 {
+        if let TasteEffect::TastyNeutral = taste_effect {
+            return 0;
+        }
+
+        match overall_taste {
+            OverallTaste::Tasty => APPEAL_MAP_POSITIVE[0].1,
+            OverallTaste::Flavorful => APPEAL_MAP_POSITIVE[1].1,
+            OverallTaste::Bitter => APPEAL_MAP_POSITIVE[2].1,
+            OverallTaste::Foul => APPEAL_MAP_POSITIVE[3].1,
+            OverallTaste::Unsavory => APPEAL_MAP_POSITIVE[4].1,
+            OverallTaste::Icky => APPEAL_MAP_POSITIVE[5].1,
+            OverallTaste::Sweet => APPEAL_MAP_POSITIVE[6].1,
+            OverallTaste::Delicious => APPEAL_MAP_POSITIVE[7].1,
+            OverallTaste::Bland => APPEAL_MAP_POSITIVE[7].1,
+        }
+    }
+}
+
+impl AppealLookup for AppealMapNegative {
+    fn get_appeal(&self, overall_taste: OverallTaste, taste_effect: TasteEffect) -> i32 {
+        match overall_taste {
+            OverallTaste::Tasty => APPEAL_MAP_NEGATIVE[0].1,
+            OverallTaste::Flavorful => APPEAL_MAP_NEGATIVE[1].1,
+            OverallTaste::Bitter => APPEAL_MAP_NEGATIVE[2].1,
+            OverallTaste::Foul => APPEAL_MAP_NEGATIVE[3].1,
+            OverallTaste::Unsavory => APPEAL_MAP_NEGATIVE[4].1,
+            OverallTaste::Icky => APPEAL_MAP_NEGATIVE[5].1,
+            OverallTaste::Sweet => APPEAL_MAP_NEGATIVE[6].1,
+            OverallTaste::Delicious => APPEAL_MAP_NEGATIVE[7].1,
+            OverallTaste::Bland => APPEAL_MAP_NEGATIVE[7].1,
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct PotionKind {
     pub key: PotionKindKey,
     pub department: Department,
     pub parts: (MainEffect, Element),
+    pub toxicity_effect: ToxicityEffect,
+    pub taste_effect: TasteEffect,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Recipe {
     pub potion_kind: PotionKind,
     pub ingredients: Vec<Ingredient>,
+    pub overall_taste: OverallTaste,
+    pub overall_appeal: i32,
 }
+
+pub type IngredientCounts = HashMap<IngredientKey, usize>;
 
 pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
     (
@@ -225,7 +340,7 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
                 IngredientPart::Stimulant,
                 IngredientPart::Impurity,
                 IngredientPart::MainEffect(MainEffect::Cat),
-                IngredientPart::Tasty,
+                IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)),
             ),
         },
     ),
@@ -237,7 +352,7 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
             kind: Kind::Herb,
             parts: IngredientParts::Raw(
                 IngredientPart::Toxin,
-                IngredientPart::Tasty,
+                IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)),
                 IngredientPart::Element(Element::Fire),
                 IngredientPart::Stimulant,
             ),
@@ -250,9 +365,9 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
             process: IngredientProcess::Raw,
             kind: Kind::Herb,
             parts: IngredientParts::Raw(
-                IngredientPart::Unsavory,
+                IngredientPart::Taste(Taste::Tastiness(Tastiness::Unsavory)),
                 IngredientPart::Stimulant,
-                IngredientPart::Bitter,
+                IngredientPart::Taste(Taste::Sweetness(Sweetness::Bitter)),
                 IngredientPart::MainEffect(MainEffect::Bone),
             ),
         },
@@ -279,9 +394,9 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
             kind: Kind::Herb,
             parts: IngredientParts::Raw(
                 IngredientPart::Element(Element::Water),
-                IngredientPart::Tasty,
+                IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)),
                 IngredientPart::Impurity,
-                IngredientPart::Sweet,
+                IngredientPart::Taste(Taste::Sweetness(Sweetness::Sweet)),
             ),
         },
     ),
@@ -292,7 +407,7 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
             process: IngredientProcess::Raw,
             kind: Kind::Herb,
             parts: IngredientParts::Raw(
-                IngredientPart::Tasty,
+                IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)),
                 IngredientPart::Stimulant,
                 IngredientPart::Impurity,
                 IngredientPart::MainEffect(MainEffect::Cat),
@@ -308,7 +423,7 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
             parts: IngredientParts::Raw(
                 IngredientPart::Element(Element::Fire),
                 IngredientPart::Antitoxin,
-                IngredientPart::Bitter,
+                IngredientPart::Taste(Taste::Sweetness(Sweetness::Bitter)),
                 IngredientPart::Element(Element::Earth),
             ),
         },
@@ -323,7 +438,7 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
                 IngredientPart::Stimulant,
                 IngredientPart::MainEffect(MainEffect::Soul),
                 IngredientPart::Toxin,
-                IngredientPart::Bitter,
+                IngredientPart::Taste(Taste::Sweetness(Sweetness::Bitter)),
             ),
         },
     ),
@@ -365,7 +480,7 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
                 IngredientPart::Stimulant,
                 IngredientPart::Toxin,
                 IngredientPart::MainEffect(MainEffect::Beast),
-                IngredientPart::Tasty,
+                IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)),
             ),
         },
     ),
@@ -392,7 +507,7 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
             parts: IngredientParts::Raw(
                 IngredientPart::Impurity,
                 IngredientPart::Element(Element::Aether),
-                IngredientPart::Unsavory,
+                IngredientPart::Taste(Taste::Tastiness(Tastiness::Unsavory)),
                 IngredientPart::Stimulant,
             ),
         },
@@ -405,7 +520,7 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
             kind: Kind::Mushroom,
             parts: IngredientParts::Raw(
                 IngredientPart::MainEffect(MainEffect::Beast),
-                IngredientPart::Unsavory,
+                IngredientPart::Taste(Taste::Tastiness(Tastiness::Unsavory)),
                 IngredientPart::Stimulant,
                 IngredientPart::Impurity,
             ),
@@ -413,7 +528,7 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
     ),
 ];
 
-pub static INGREDIENTS_VALUES: [&Ingredient; 14] = [
+pub static _INGREDIENTS_VALUES: [&Ingredient; 14] = [
     &INGREDIENTS[0].1,
     &INGREDIENTS[1].1,
     &INGREDIENTS[2].1,
@@ -462,6 +577,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Speed,
             department: Department::Health,
             parts: (MainEffect::Cat, Element::Fire),
+            toxicity_effect: ToxicityEffect::ToxicNegative,
+            taste_effect: TasteEffect::TastyPositive,
         },
     ),
     (
@@ -470,6 +587,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Slow,
             department: Department::Provisions,
             parts: (MainEffect::Cat, Element::Water),
+            toxicity_effect: ToxicityEffect::ToxicPositive,
+            taste_effect: TasteEffect::TastyNeutral,
         },
     ),
     (
@@ -478,6 +597,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Mana,
             department: Department::Sourcery,
             parts: (MainEffect::Cat, Element::Aether),
+            toxicity_effect: ToxicityEffect::ToxicNegative,
+            taste_effect: TasteEffect::TastyPositive,
         },
     ),
     (
@@ -486,6 +607,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Warding,
             department: Department::Sourcery,
             parts: (MainEffect::Cat, Element::Earth),
+            toxicity_effect: ToxicityEffect::ToxicNegative,
+            taste_effect: TasteEffect::TastyPositive,
         },
     ),
     (
@@ -494,6 +617,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Strength,
             department: Department::Health,
             parts: (MainEffect::Bone, Element::Fire),
+            toxicity_effect: ToxicityEffect::ToxicNegative,
+            taste_effect: TasteEffect::TastyPositive,
         },
     ),
     (
@@ -502,6 +627,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Weakness,
             department: Department::Provisions,
             parts: (MainEffect::Bone, Element::Water),
+            toxicity_effect: ToxicityEffect::ToxicPositive,
+            taste_effect: TasteEffect::TastyNeutral,
         },
     ),
     (
@@ -510,6 +637,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Necromancy,
             department: Department::Sourcery,
             parts: (MainEffect::Bone, Element::Aether),
+            toxicity_effect: ToxicityEffect::ToxicPositive,
+            taste_effect: TasteEffect::TastyNeutral,
         },
     ),
     (
@@ -518,6 +647,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Skelleton,
             department: Department::Provisions,
             parts: (MainEffect::Bone, Element::Earth),
+            toxicity_effect: ToxicityEffect::ToxicPositive,
+            taste_effect: TasteEffect::TastyNegative,
         },
     ),
     (
@@ -526,6 +657,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Speech,
             department: Department::Health,
             parts: (MainEffect::Soul, Element::Fire),
+            toxicity_effect: ToxicityEffect::ToxicNegative,
+            taste_effect: TasteEffect::TastyPositive,
         },
     ),
     (
@@ -534,6 +667,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Silence,
             department: Department::Provisions,
             parts: (MainEffect::Soul, Element::Water),
+            toxicity_effect: ToxicityEffect::ToxicNegative,
+            taste_effect: TasteEffect::TastyPositive,
         },
     ),
     (
@@ -542,6 +677,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Conjuring,
             department: Department::Sourcery,
             parts: (MainEffect::Soul, Element::Aether),
+            toxicity_effect: ToxicityEffect::ToxicPositive,
+            taste_effect: TasteEffect::TastyNeutral,
         },
     ),
     (
@@ -550,6 +687,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Exorcism,
             department: Department::Sourcery,
             parts: (MainEffect::Soul, Element::Earth),
+            toxicity_effect: ToxicityEffect::ToxicPositive,
+            taste_effect: TasteEffect::TastyNegative,
         },
     ),
     (
@@ -558,6 +697,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Vitality,
             department: Department::Health,
             parts: (MainEffect::Beast, Element::Fire),
+            toxicity_effect: ToxicityEffect::ToxicPositive,
+            taste_effect: TasteEffect::TastyPositive,
         },
     ),
     (
@@ -566,6 +707,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Sleep,
             department: Department::Provisions,
             parts: (MainEffect::Beast, Element::Water),
+            toxicity_effect: ToxicityEffect::ToxicPositive,
+            taste_effect: TasteEffect::TastyPositive,
         },
     ),
     (
@@ -574,6 +717,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Summoning,
             department: Department::Sourcery,
             parts: (MainEffect::Beast, Element::Aether),
+            toxicity_effect: ToxicityEffect::ToxicPositive,
+            taste_effect: TasteEffect::TastyNeutral,
         },
     ),
     (
@@ -582,6 +727,8 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Monster,
             department: Department::Sourcery,
             parts: (MainEffect::Beast, Element::Earth),
+            toxicity_effect: ToxicityEffect::ToxicPositive,
+            taste_effect: TasteEffect::TastyNegative,
         },
     ),
 ];
@@ -623,11 +770,11 @@ impl ValidCombination {
 }
 
 pub trait GetByKey<K, V> {
-    fn get_by_key(&self, key: K) -> &V;
+    fn get_by_key(&self, key: &K) -> &V;
 }
 
 impl GetByKey<IngredientKey, Ingredient> for [(IngredientKey, Ingredient); 14] {
-    fn get_by_key(&self, key: IngredientKey) -> &Ingredient {
+    fn get_by_key(&self, key: &IngredientKey) -> &Ingredient {
         match key {
             IngredientKey::Lupine => &self[1].1,
             IngredientKey::Catnip => &self[0].1,
@@ -648,7 +795,7 @@ impl GetByKey<IngredientKey, Ingredient> for [(IngredientKey, Ingredient); 14] {
 }
 
 impl GetByKey<PotionKindKey, PotionKind> for [(PotionKindKey, PotionKind); 16] {
-    fn get_by_key(&self, key: PotionKindKey) -> &PotionKind {
+    fn get_by_key(&self, key: &PotionKindKey) -> &PotionKind {
         match key {
             PotionKindKey::Speed => &self[0].1,
             PotionKindKey::Slow => &self[1].1,
@@ -671,7 +818,7 @@ impl GetByKey<PotionKindKey, PotionKind> for [(PotionKindKey, PotionKind); 16] {
 }
 
 impl GetByKey<Department, &'static str> for [(Department, &'static str); 3] {
-    fn get_by_key(&self, key: Department) -> &&'static str {
+    fn get_by_key(&self, key: &Department) -> &&'static str {
         match key {
             Department::Health => &&self[0].1,
             Department::Sourcery => &&self[1].1,
@@ -691,7 +838,7 @@ mod tests {
             let key = &potion_kinds[i].0;
             let expected = &potion_kinds[i].1;
 
-            assert_eq!(potion_kinds.get_by_key(key.clone()), expected);
+            assert_eq!(potion_kinds.get_by_key(key), expected);
         }
     }
 
@@ -702,30 +849,19 @@ mod tests {
             let key = &ingredients[i].0;
             let expected = &ingredients[i].1;
 
-            assert_eq!(ingredients.get_by_key(key.clone()), expected);
-        }
-    }
-
-    #[test]
-    fn test_get_department_name_by_key() {
-        let department_names = &DEPARTMENT_NAMES;
-        for i in 0..3 {
-            let key = &department_names[i].0;
-            let expected = &department_names[i].1;
-
-            assert_eq!(department_names.get_by_key(key.clone()), expected);
+            assert_eq!(ingredients.get_by_key(key), expected);
         }
     }
 
     #[test]
     fn test_get_name() {
-        let ingredient = INGREDIENTS.get_by_key(IngredientKey::Sage);
+        let ingredient = INGREDIENTS.get_by_key(&IngredientKey::Sage);
         assert_eq!(ingredient.name(), "Sage");
 
-        let ingredient = INGREDIENTS.get_by_key(IngredientKey::Catnip);
+        let ingredient = INGREDIENTS.get_by_key(&IngredientKey::Catnip);
         assert_eq!(ingredient.name(), "Catnip");
 
-        let ingredient = INGREDIENTS.get_by_key(IngredientKey::Elven);
+        let ingredient = INGREDIENTS.get_by_key(&IngredientKey::Elven);
         assert_eq!(ingredient.name(), "Elven Saddle");
     }
 }

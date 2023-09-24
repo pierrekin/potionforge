@@ -1,6 +1,8 @@
 use crate::models::{
-    self, Element, GetByParts, Ingredient, IngredientPart, IngredientParts, IngredientProcess,
-    MainEffect, Recipe, ValidCombination,
+    self, AppealLookup, AppealMapNegative, AppealMapPositive, Element, GetByParts, Ingredient,
+    IngredientPart, IngredientParts, IngredientProcess, MainEffect, OverallTaste, PotionKind,
+    Recipe, Sweetness, Taste, TasteEffect, Tastiness, ValidCombination, APPEAL_MAP_NEGATIVE,
+    APPEAL_MAP_POSITIVE,
 };
 
 pub fn process_cut(ingredient: &Ingredient) -> Option<Vec<Ingredient>> {
@@ -240,38 +242,147 @@ pub fn collect_parts(ingredients: &[Ingredient]) -> Vec<IngredientPart> {
     result
 }
 
-pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
-    let mut main_effect: Option<&MainEffect> = None;
-    let mut element: Option<&Element> = None;
-    let mut main_effect_count = 0;
-    let mut element_count = 0;
+pub fn find_dominant_element(parts: &Vec<IngredientPart>) -> Option<Element> {
+    let mut counts = [0; 4];
 
-    let parts = collect_parts(ingredients);
-    for part in parts.iter() {
+    for part in parts {
+        if let IngredientPart::Element(element) = part {
+            match element {
+                Element::Fire => counts[0] += 1,
+                Element::Water => counts[1] += 1,
+                Element::Earth => counts[2] += 1,
+                Element::Aether => counts[3] += 1,
+            }
+        }
+    }
+
+    counts[0] -= counts[1];
+    counts[2] -= counts[3];
+
+    let max_count = *counts.iter().max().unwrap();
+    if counts.iter().filter(|&&x| x == max_count).count() > 1 {
+        return None;
+    }
+
+    match counts.iter().position(|&x| x == max_count) {
+        Some(0) => Some(Element::Fire),
+        Some(1) => Some(Element::Water),
+        Some(2) => Some(Element::Earth),
+        Some(3) => Some(Element::Aether),
+        _ => None,
+    }
+}
+
+pub fn find_dominant_main_effect(parts: &[IngredientPart]) -> Option<MainEffect> {
+    let mut counts = [0; 4];
+
+    for part in parts {
+        if let IngredientPart::MainEffect(effect) = part {
+            match effect {
+                MainEffect::Cat => counts[0] += 1,
+                MainEffect::Bone => counts[1] += 1,
+                MainEffect::Soul => counts[2] += 1,
+                MainEffect::Beast => counts[3] += 1,
+            }
+        }
+    }
+
+    let max_count = *counts.iter().max().unwrap();
+    if counts.iter().filter(|&&x| x == max_count).count() > 1 {
+        return None;
+    }
+
+    match counts.iter().position(|&x| x == max_count) {
+        Some(0) => Some(MainEffect::Cat),
+        Some(1) => Some(MainEffect::Bone),
+        Some(2) => Some(MainEffect::Soul),
+        Some(3) => Some(MainEffect::Beast),
+        _ => None,
+    }
+}
+
+pub fn determine_overall_taste(parts: Vec<IngredientPart>) -> OverallTaste {
+    let mut tastiness: i32 = 0;
+    let mut sweetness: i32 = 0;
+
+    for part in parts {
         match part {
-            IngredientPart::MainEffect(me) => {
-                main_effect_count += 1;
-                main_effect = Some(me);
-            }
-            IngredientPart::Element(el) => {
-                element_count += 1;
-                element = Some(el);
-            }
+            IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)) => tastiness += 1,
+            IngredientPart::Taste(Taste::Tastiness(Tastiness::Unsavory)) => tastiness -= 1,
+            IngredientPart::Taste(Taste::Sweetness(Sweetness::Sweet)) => sweetness += 1,
+            IngredientPart::Taste(Taste::Sweetness(Sweetness::Bitter)) => sweetness -= 1,
             _ => {}
         }
     }
 
-    if main_effect_count != 1 || element_count != 1 {
+    // Normalize
+    tastiness = tastiness.signum();
+    sweetness = sweetness.signum();
+
+    // Map to Option<Taste> enum
+    let final_tastiness: Option<Tastiness> = match tastiness {
+        1 => Some(Tastiness::Tasty),
+        -1 => Some(Tastiness::Unsavory),
+        _ => None,
+    };
+
+    let final_sweetness: Option<Sweetness> = match sweetness {
+        1 => Some(Sweetness::Sweet),
+        -1 => Some(Sweetness::Bitter),
+        _ => None,
+    };
+
+    // Determine overall taste
+    match (final_tastiness, final_sweetness) {
+        (Some(Tastiness::Tasty), None) => OverallTaste::Tasty,
+        (Some(Tastiness::Tasty), Some(Sweetness::Bitter)) => OverallTaste::Flavorful,
+        (None, Some(Sweetness::Bitter)) => OverallTaste::Bitter,
+        (Some(Tastiness::Unsavory), Some(Sweetness::Bitter)) => OverallTaste::Foul,
+        (Some(Tastiness::Unsavory), None) => OverallTaste::Unsavory,
+        (Some(Tastiness::Unsavory), Some(Sweetness::Sweet)) => OverallTaste::Icky,
+        (None, Some(Sweetness::Sweet)) => OverallTaste::Sweet,
+        (Some(Tastiness::Tasty), Some(Sweetness::Sweet)) => OverallTaste::Delicious,
+        (None, None) => OverallTaste::Bland,
+    }
+}
+
+pub fn determine_taste_appeal(potion_kind: &PotionKind, overall_taste: OverallTaste) -> i32 {
+    match potion_kind.taste_effect {
+        TasteEffect::TastyNeutral => 0,
+        TasteEffect::TastyPositive => {
+            AppealMapPositive.get_appeal(overall_taste, potion_kind.taste_effect) as i32
+        }
+        TasteEffect::TastyNegative => {
+            AppealMapNegative.get_appeal(overall_taste, potion_kind.taste_effect) as i32
+        }
+    }
+}
+
+fn determine_overall_appeal(potion_kind: &models::PotionKind, overall_taste: OverallTaste) -> i32 {
+    determine_taste_appeal(potion_kind, overall_taste)
+}
+
+pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
+    let parts = collect_parts(ingredients);
+    let element: Option<Element> = find_dominant_element(&parts);
+    let main_effect: Option<MainEffect> = find_dominant_main_effect(&parts);
+
+    if element.is_none() || main_effect.is_none() {
         return None;
     }
 
-    // Safe to unwrap due to checks above.
-    let valid_combination =
-        ValidCombination::new(*main_effect.unwrap(), *element.unwrap()).unwrap();
+    // Safe to unwrap due to check above.
+    let valid_combination = ValidCombination::new(main_effect.unwrap(), element.unwrap()).unwrap();
     let potion_kind = models::POTION_KINDS.get_by_parts(valid_combination);
+
+    let overall_taste = determine_overall_taste(parts);
+
+    let overall_appeal = determine_overall_appeal(potion_kind, overall_taste);
 
     Some(Recipe {
         potion_kind: potion_kind.clone(),
         ingredients: ingredients.to_vec(),
+        overall_taste: overall_taste,
+        overall_appeal: overall_appeal,
     })
 }
