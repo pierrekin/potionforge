@@ -271,15 +271,11 @@ pub struct AppealMapPositive;
 pub struct AppealMapNegative;
 
 pub trait AppealLookup {
-    fn get_appeal(&self, overall_taste: OverallTaste, taste_effect: TasteEffect) -> i32;
+    fn get_appeal(&self, overall_taste: OverallTaste) -> i32;
 }
 
 impl AppealLookup for AppealMapPositive {
-    fn get_appeal(&self, overall_taste: OverallTaste, taste_effect: TasteEffect) -> i32 {
-        if let TasteEffect::TastyNeutral = taste_effect {
-            return 0;
-        }
-
+    fn get_appeal(&self, overall_taste: OverallTaste) -> i32 {
         match overall_taste {
             OverallTaste::Tasty => APPEAL_MAP_POSITIVE[0].1,
             OverallTaste::Flavorful => APPEAL_MAP_POSITIVE[1].1,
@@ -295,7 +291,7 @@ impl AppealLookup for AppealMapPositive {
 }
 
 impl AppealLookup for AppealMapNegative {
-    fn get_appeal(&self, overall_taste: OverallTaste, taste_effect: TasteEffect) -> i32 {
+    fn get_appeal(&self, overall_taste: OverallTaste) -> i32 {
         match overall_taste {
             OverallTaste::Tasty => APPEAL_MAP_NEGATIVE[0].1,
             OverallTaste::Flavorful => APPEAL_MAP_NEGATIVE[1].1,

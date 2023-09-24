@@ -1,8 +1,7 @@
 use crate::models::{
     self, AppealLookup, AppealMapNegative, AppealMapPositive, Element, GetByParts, Ingredient,
     IngredientPart, IngredientParts, IngredientProcess, MainEffect, OverallTaste, PotionKind,
-    Recipe, Sweetness, Taste, TasteEffect, Tastiness, ValidCombination, APPEAL_MAP_NEGATIVE,
-    APPEAL_MAP_POSITIVE,
+    Recipe, Sweetness, Taste, TasteEffect, Tastiness, ValidCombination,
 };
 
 pub fn process_cut(ingredient: &Ingredient) -> Option<Vec<Ingredient>> {
@@ -349,12 +348,8 @@ pub fn determine_overall_taste(parts: Vec<IngredientPart>) -> OverallTaste {
 pub fn determine_taste_appeal(potion_kind: &PotionKind, overall_taste: OverallTaste) -> i32 {
     match potion_kind.taste_effect {
         TasteEffect::TastyNeutral => 0,
-        TasteEffect::TastyPositive => {
-            AppealMapPositive.get_appeal(overall_taste, potion_kind.taste_effect) as i32
-        }
-        TasteEffect::TastyNegative => {
-            AppealMapNegative.get_appeal(overall_taste, potion_kind.taste_effect) as i32
-        }
+        TasteEffect::TastyPositive => AppealMapPositive.get_appeal(overall_taste) as i32,
+        TasteEffect::TastyNegative => AppealMapNegative.get_appeal(overall_taste) as i32,
     }
 }
 

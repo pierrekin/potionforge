@@ -95,7 +95,7 @@ fn part_1(possible_recipes: &Vec<Recipe>, available_ingredients: &IngredientCoun
     solution.raw().print_solution();
 
     for (column, recipe) in columns.iter().zip(possible_recipes.iter()) {
-        if (solution.col(*column) == 1.0) {
+        if solution.col(*column) == 1.0 {
             dbg!(&recipe.potion_kind.key, &recipe.overall_appeal);
         }
     }
@@ -113,7 +113,7 @@ fn create_appeal_objectives(possible_recipes: &[Recipe]) -> Vec<f64> {
 fn part_2(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
-    num_recommended_recipes: i32,
+    _num_recommended_recipes: i32,
 ) -> () {
     // Create the problem.
     let mut model = Model::default();
@@ -146,7 +146,7 @@ fn part_2(
     solution.raw().print_solution();
 
     for (column, recipe) in columns.iter().zip(possible_recipes.iter()) {
-        if (solution.col(*column) == 1.0) {
+        if solution.col(*column) == 1.0 {
             dbg!(&recipe.potion_kind.key, &recipe.overall_appeal);
         }
     }
