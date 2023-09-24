@@ -190,6 +190,34 @@ pub enum IngredientProcess {
     PickledFermentedInfused,
 }
 
+impl IngredientProcess {
+    pub fn to_human(&self) -> String {
+        match self {
+            IngredientProcess::Raw => "Raw",
+            IngredientProcess::Crushed => "Crushed",
+            IngredientProcess::Blanched => "Blanched",
+            IngredientProcess::Dried => "Dried",
+            IngredientProcess::Pickled => "Pickled",
+            IngredientProcess::Fermented => "Fermented",
+            IngredientProcess::Infused => "Infused",
+            IngredientProcess::CrushedFermented => "Crushed, Fermented",
+            IngredientProcess::BlanchedFermented => "Blanched, Fermented",
+            IngredientProcess::DriedFermented => "Dried, Fermented",
+            IngredientProcess::PickledFermented => "Pickled, Fermented",
+            IngredientProcess::CrushedInfused => "Crushed, Infused",
+            IngredientProcess::BlanchedInfused => "Blanched, Infused",
+            IngredientProcess::DriedInfused => "Dried, Infused",
+            IngredientProcess::PickledInfused => "Pickled, Infused",
+            IngredientProcess::FermentedInfused => "Fermented, Infused",
+            IngredientProcess::CrushedFermentedInfused => "Crushed, Fermented, Infused",
+            IngredientProcess::BlanchedFermentedInfused => "Blanched, Fermented, Infused",
+            IngredientProcess::DriedFermentedInfused => "Dried, Fermented, Infused",
+            IngredientProcess::PickledFermentedInfused => "Pickled, Fermented, Infused",
+        }
+        .to_string()
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Ingredient {
     pub key: IngredientKey,

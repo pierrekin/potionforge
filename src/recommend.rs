@@ -34,7 +34,7 @@ fn create_ingredient_constraints(
     }
 }
 
-fn create_category_constraints(model: &mut Model, columns: &[Col], recipes: &[Recipe]) {
+fn create_department_constraints(model: &mut Model, columns: &[Col], recipes: &[Recipe]) {
     // No more than 5 Health recipes.
     let health_row = model.add_row();
     model.set_row_upper(health_row, 5.);
@@ -83,7 +83,7 @@ fn part_1(possible_recipes: &Vec<Recipe>, available_ingredients: &IngredientCoun
         &possible_recipes,
         &available_ingredients,
     );
-    create_category_constraints(&mut model, &columns, &possible_recipes);
+    create_department_constraints(&mut model, &columns, &possible_recipes);
 
     // Solve the problem. Returns the solution
     let solution = model.solve();
@@ -92,7 +92,7 @@ fn part_1(possible_recipes: &Vec<Recipe>, available_ingredients: &IngredientCoun
     assert_eq!(Status::Finished, solution.raw().status());
 
     // Print the solution (debug).
-    solution.raw().print_solution();
+    // solution.raw().print_solution();
 
     for (column, recipe) in columns.iter().zip(possible_recipes.iter()) {
         if solution.col(*column) == 1.0 {
@@ -110,11 +110,21 @@ fn create_appeal_objectives(possible_recipes: &[Recipe]) -> Vec<f64> {
         .collect_vec()
 }
 
+fn create_number_constraints(model: &mut Model, columns: &[Col], min_recipes: i32) {
+    // At least min_recipes number of recipes
+    let recipes_row = model.add_row();
+    model.set_row_lower(recipes_row, min_recipes as f64);
+
+    for column in columns.iter() {
+        model.set_weight(recipes_row, *column, 1.);
+    }
+}
+
 fn part_2(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
-    _num_recommended_recipes: i32,
-) -> () {
+    min_recipes: i32,
+) -> Vec<Recipe> {
     // Create the problem.
     let mut model = Model::default();
 
@@ -134,7 +144,8 @@ fn part_2(
         &possible_recipes,
         &available_ingredients,
     );
-    create_category_constraints(&mut model, &columns, &possible_recipes);
+    create_department_constraints(&mut model, &columns, &possible_recipes);
+    create_number_constraints(&mut model, &columns, min_recipes);
 
     // Solve the problem. Returns the solution
     let solution = model.solve();
@@ -143,20 +154,24 @@ fn part_2(
     assert_eq!(Status::Finished, solution.raw().status());
 
     // Print the solution (debug).
-    solution.raw().print_solution();
+    // solution.raw().print_solution();
 
-    for (column, recipe) in columns.iter().zip(possible_recipes.iter()) {
-        if solution.col(*column) == 1.0 {
-            dbg!(&recipe.potion_kind.key, &recipe.overall_appeal);
-        }
-    }
+    columns
+        .iter()
+        .zip(possible_recipes.iter())
+        .filter(|(column, _)| solution.col(**column) == 1.0)
+        .map(|(_, recipe)| recipe.clone())
+        .collect()
 }
 
-pub fn recommend(possible_recipes: Vec<Recipe>, available_ingredients: &IngredientCounts) -> () {
+pub fn recommend(
+    possible_recipes: Vec<Recipe>,
+    available_ingredients: &IngredientCounts,
+) -> Vec<Recipe> {
     let num_recommended_recipes = part_1(&possible_recipes, available_ingredients);
     part_2(
         &possible_recipes,
         available_ingredients,
         num_recommended_recipes,
-    );
+    )
 }
