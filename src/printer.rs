@@ -63,7 +63,7 @@ pub fn print_recipes_semi_compact(recipes: Vec<Recipe>) {
         };
 
         print!(
-            "Recipe {}: Dept: {} | Kind: {:?} | Parts: {:?}, {:?} | Ingredients: [",
+            "({}) {}: {:?} | Parts: {:?}, {:?} | Ingredients: [",
             i + 1,
             dept,
             recipe.potion_kind.key,

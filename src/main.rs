@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
-use models::{IngredientCounts};
+use models::IngredientCounts;
 use serde::Deserialize;
 
 mod models;
@@ -33,5 +33,11 @@ fn main() {
     );
 
     let recommendations = recommend::recommend(possible_recipes, &config.ingredients);
+    let total_appeal: i32 = recommendations
+        .iter()
+        .map(|recipe| recipe.overall_appeal)
+        .sum();
+
+    println!("Total Appeal: {}", total_appeal);
     printer::print_recipes_semi_compact(recommendations);
 }

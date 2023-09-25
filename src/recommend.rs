@@ -3,8 +3,7 @@ extern crate coin_cbc;
 use coin_cbc::{raw::Status, Col, Model, Sense};
 use itertools::Itertools;
 
-
-use crate::models::{Department, GetByKey, IngredientCounts, Recipe, INGREDIENTS};
+use crate::models::{Department, GetByKey, IngredientCounts, Recipe, INGREDIENTS, POTION_KINDS};
 
 fn create_binary_columns(model: &mut Model, num_columns: usize, objectives: Vec<f64>) -> Vec<Col> {
     let mut columns = Vec::with_capacity(num_columns);
@@ -30,6 +29,20 @@ fn create_ingredient_constraints(
             let ingredient = INGREDIENTS.get_by_key(ingredient_key);
             if recipe.ingredients.contains(ingredient) {
                 model.set_weight(ingredient_row, *column, 1.);
+            }
+        }
+    }
+}
+
+fn create_potion_kind_constraints(model: &mut Model, columns: &[Col], recipes: &[Recipe]) {
+    // No more than one of each potion kind.
+    for (potion_kind_key, _) in POTION_KINDS.iter() {
+        let potion_kind_row = model.add_row();
+        model.set_row_upper(potion_kind_row, 1.);
+
+        for (column, recipe) in columns.iter().zip(recipes.iter()) {
+            if recipe.potion_kind.key == *potion_kind_key {
+                model.set_weight(potion_kind_row, *column, 1.);
             }
         }
     }
@@ -88,6 +101,7 @@ fn maximise_recipes(
         &possible_recipes,
         &available_ingredients,
     );
+    create_potion_kind_constraints(&mut model, &columns, &possible_recipes);
     create_department_constraints(&mut model, &columns, &possible_recipes);
 
     // Solve the problem. Returns the solution
@@ -143,6 +157,7 @@ fn maximise_appeal(
         &possible_recipes,
         &available_ingredients,
     );
+    create_potion_kind_constraints(&mut model, &columns, &possible_recipes);
     create_department_constraints(&mut model, &columns, &possible_recipes);
     create_number_constraints(&mut model, &columns, min_recipes);
 
