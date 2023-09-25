@@ -261,6 +261,15 @@ pub enum TasteEffect {
 }
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum OverallPurity {
+    VeryStimulant,
+    Stimulant,
+    Neutral,
+    Impure,
+    VeryImpure,
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum OverallToxicity {
     VeryToxic,
     Toxic,
@@ -360,6 +369,7 @@ pub struct Recipe {
     pub ingredients: Vec<Ingredient>,
     pub overall_taste: OverallTaste,
     pub overall_toxicity: OverallToxicity,
+    pub overall_purity: OverallPurity,
     pub overall_appeal: i32,
 }
 
