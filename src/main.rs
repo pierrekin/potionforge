@@ -36,8 +36,6 @@ fn main() {
         config.arcane_power,
     );
 
-    printer::print_recipes_table(&possible_recipes);
-
     let recommendations =
         recommend::recommend(possible_recipes, &config.ingredients, config.utilisation);
     let total_appeal: i32 = recommendations

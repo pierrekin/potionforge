@@ -17,14 +17,18 @@ pub fn permute_ingredient(
     }
 
     if processes.contains(&"ferment") {
-        if let Some(ferment_result) = simulate::process_ferment(ingredient) {
-            result.push(ferment_result);
+        for ingredient in result.clone() {
+            if let Some(ferment_result) = simulate::process_ferment(&ingredient) {
+                result.push(ferment_result);
+            }
         }
     }
 
     if processes.contains(&"infuse") {
-        if let Some(infuse_result) = simulate::process_infuse(ingredient) {
-            result.push(infuse_result);
+        for ingredient in result.clone() {
+            if let Some(infuse_result) = simulate::process_infuse(&ingredient) {
+                result.push(infuse_result);
+            }
         }
     }
 
