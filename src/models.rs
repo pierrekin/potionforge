@@ -77,7 +77,7 @@ impl From<IngredientPart> for Element {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Ord, PartialOrd, Eq, Hash)]
 pub enum Kind {
     Herb,
     Mushroom,
@@ -110,7 +110,7 @@ pub enum IngredientKey {
     Stinkhorn,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Ord, PartialOrd, Eq, Hash)]
 pub enum IngredientParts {
     // Single processes
     Raw(
@@ -163,7 +163,7 @@ pub enum IngredientParts {
     PickledFermentedInfused(IngredientPart, IngredientPart),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub enum IngredientProcess {
     // Single Processes
     Raw,
@@ -220,7 +220,7 @@ impl IngredientProcess {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Ingredient {
     pub key: IngredientKey,
     pub process: IngredientProcess,

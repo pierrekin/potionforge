@@ -26,14 +26,16 @@ fn main() {
     let config: Config = serde_yaml::from_str(&config_contents).unwrap();
     println!("{:?}", config);
 
-    let available_ingredient_keys: Vec<_> = config.ingredients.keys().sorted().collect();
-    // let available_ingredient_keys = available_ingredient_keys.reverse();
+    let mut available_ingredient_keys: Vec<_> = config.ingredients.keys().sorted().collect();
+    available_ingredient_keys.reverse();
 
     let possible_recipes = permute::get_all_recipes(
         available_ingredient_keys,
         vec!["cut", "ferment", "infuse"],
         config.arcane_power,
     );
+
+    printer::print_recipes_table(&possible_recipes);
 
     let recommendations =
         recommend::recommend(possible_recipes, &config.ingredients, config.utilisation);

@@ -1,5 +1,5 @@
 use crate::models::{GetByKey, Ingredient, IngredientKey, Recipe, INGREDIENTS};
-use crate::simulate;
+use crate::{printer, simulate};
 
 use rayon::prelude::*;
 
@@ -110,10 +110,12 @@ pub fn get_all_recipes(
             (0..total_combinations)
                 .into_par_iter()
                 .filter_map(|index| {
-                    let combination = generate_combination(&all_ingredients, k, index as i64);
+                    let mut combination = generate_combination(&all_ingredients, k, index as i64);
                     if !validate_combination(&combination) {
                         return None;
                     }
+                    // combination.sort();
+                    // combination.reverse();
                     match simulate::simulate(combination.as_slice()) {
                         Some(inner_value) => Some(inner_value),
                         None => None,
