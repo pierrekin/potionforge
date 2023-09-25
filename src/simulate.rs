@@ -251,12 +251,25 @@ pub fn process_infuse(ingredient: &Ingredient) -> Option<Ingredient> {
 
     let new_process = match ingredient.process {
         IngredientProcess::Raw => IngredientProcess::Infused,
+        IngredientProcess::Crushed => IngredientProcess::CrushedInfused,
+        IngredientProcess::Blanched => IngredientProcess::BlanchedInfused,
+        IngredientProcess::Dried => IngredientProcess::DriedInfused,
+        IngredientProcess::Pickled => IngredientProcess::PickledInfused,
         IngredientProcess::Fermented => IngredientProcess::FermentedInfused,
         IngredientProcess::CrushedFermented => IngredientProcess::CrushedFermentedInfused,
         IngredientProcess::BlanchedFermented => IngredientProcess::BlanchedFermentedInfused,
         IngredientProcess::DriedFermented => IngredientProcess::DriedFermentedInfused,
         IngredientProcess::PickledFermented => IngredientProcess::PickledFermentedInfused,
-        _ => return None,
+        IngredientProcess::Infused => return None, // Already infused
+        IngredientProcess::CrushedInfused => return None, // Already infused
+        IngredientProcess::BlanchedInfused => return None, // Already infused
+        IngredientProcess::DriedInfused => return None, // Already infused
+        IngredientProcess::PickledInfused => return None, // Already infused
+        IngredientProcess::FermentedInfused => return None, // Already infused
+        IngredientProcess::CrushedFermentedInfused => return None, // Already infused
+        IngredientProcess::BlanchedFermentedInfused => return None, // Already infused
+        IngredientProcess::DriedFermentedInfused => return None, // Already infused
+        IngredientProcess::PickledFermentedInfused => return None, // Already infused
     };
 
     Some(Ingredient {
