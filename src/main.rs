@@ -1,5 +1,5 @@
-use core::hash::Hash;
-use std::collections::hash_map::DefaultHasher;
+
+
 use std::fs::File;
 use std::hash::Hasher;
 use std::io::Read;

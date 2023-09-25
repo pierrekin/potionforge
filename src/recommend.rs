@@ -3,7 +3,7 @@ extern crate coin_cbc;
 use coin_cbc::{raw::Status, Col, Model, Sense};
 use itertools::Itertools;
 
-use crate::models::{Department, GetByKey, IngredientCounts, Recipe, INGREDIENTS, POTION_KINDS};
+use crate::models::{Department, IngredientCounts, Recipe, POTION_KINDS};
 
 fn create_binary_columns(model: &mut Model, num_columns: usize, objectives: Vec<f64>) -> Vec<Col> {
     let mut columns = Vec::with_capacity(num_columns);
