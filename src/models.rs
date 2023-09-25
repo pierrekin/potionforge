@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum IngredientPart {
     MainEffect(MainEffect),
     Element(Element),
@@ -13,7 +13,7 @@ pub enum IngredientPart {
     Antitoxin,
 }
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum MainEffect {
     Cat,
     Bone,
@@ -21,7 +21,7 @@ pub enum MainEffect {
     Beast,
 }
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum Element {
     Fire,
     Aether,
@@ -29,19 +29,19 @@ pub enum Element {
     Earth,
 }
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum Taste {
     Tastiness(Tastiness),
     Sweetness(Sweetness),
 }
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum Tastiness {
     Tasty,
     Unsavory,
 }
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum Sweetness {
     Bitter,
     Sweet,
@@ -83,7 +83,7 @@ pub enum Kind {
     Mushroom,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum Department {
     Health,
     Sourcery,
@@ -228,7 +228,7 @@ pub struct Ingredient {
     pub parts: IngredientParts,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum PotionKindKey {
     Speed,
     Slow,
@@ -258,6 +258,15 @@ pub enum TasteEffect {
     TastyPositive,
     TastyNeutral,
     TastyNegative,
+}
+
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum OverallToxicity {
+    VeryToxic,
+    Toxic,
+    Neutral,
+    Antitoxic,
+    Veryantitoxic,
 }
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -350,6 +359,7 @@ pub struct Recipe {
     pub potion_kind: PotionKind,
     pub ingredients: Vec<Ingredient>,
     pub overall_taste: OverallTaste,
+    pub overall_toxicity: OverallToxicity,
     pub overall_appeal: i32,
 }
 

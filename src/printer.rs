@@ -1,60 +1,38 @@
-use crate::models::{Department, Recipe};
+extern crate prettytable;
 
-#[allow(dead_code)]
-pub fn print_recipes(recipes: Vec<Recipe>) {
-    for (i, recipe) in recipes.iter().enumerate() {
-        println!("Recipe {}:", i + 1);
-        println!("====================");
-        println!(
-            "Department: {}",
-            match recipe.potion_kind.department {
-                Department::Health => "Health",
-                Department::Sourcery => "Sourcery",
-                Department::Provisions => "Provisions",
+use std::cmp::Ordering;
+
+use crate::models::{Department, OverallToxicity, Recipe, ToxicityEffect};
+use prettytable::{Cell, Row, Table};
+
+pub fn print_recipes_table(recipes: Vec<Recipe>) {
+    let mut recipes = recipes.clone();
+    recipes.sort_by(|a, b| {
+        let dept_cmp = a.potion_kind.department.cmp(&b.potion_kind.department);
+        if dept_cmp == Ordering::Equal {
+            let main_effect_cmp = a.potion_kind.parts.0.cmp(&b.potion_kind.parts.0);
+            if main_effect_cmp == Ordering::Equal {
+                return a.potion_kind.parts.1.cmp(&b.potion_kind.parts.1);
             }
-        );
-        println!("Potion: {:?}", recipe.potion_kind.key);
-        println!("Main Effect: {:?}", recipe.potion_kind.parts.0);
-        println!("Element: {:?}", recipe.potion_kind.parts.1);
-        println!("Ingredients:");
-        for ingredient in &recipe.ingredients {
-            println!(
-                "  - {:?} ({})",
-                ingredient.key,
-                ingredient.process.to_human()
-            );
+            main_effect_cmp
+        } else {
+            dept_cmp
         }
-        println!("Overall Taste: {:?}", recipe.overall_taste);
-        println!("Overall Appeal: {}", recipe.overall_appeal);
-        println!();
-    }
-}
+    });
 
-#[allow(dead_code)]
-pub fn print_recipes_compact(recipes: Vec<Recipe>) {
-    for recipe in recipes {
-        let potion_kind = &recipe.potion_kind;
-        let ingredients = &recipe.ingredients;
-        let appeal = recipe.overall_appeal;
+    let mut table = Table::new();
+    table.add_row(Row::new(vec![
+        Cell::new("Index"),
+        Cell::new("Department"),
+        Cell::new("Potion"),
+        // Cell::new("Main Effect"),
+        // Cell::new("Element"),
+        Cell::new("Ingredients"),
+        Cell::new("Toxicity"),
+        Cell::new("Taste"),
+        Cell::new("Appeal"),
+    ]));
 
-        print!(
-            "Dept: {:?} | Kind: {:?} | Parts: {:?}, {:?} | Ingredients: [",
-            potion_kind.department, potion_kind.key, potion_kind.parts.0, potion_kind.parts.1
-        );
-
-        for (i, ingredient) in ingredients.iter().enumerate() {
-            if i > 0 {
-                print!(", ");
-            }
-            print!("{:?} ({}) ", ingredient.key, ingredient.process.to_human());
-        }
-
-        println!("] | Appeal: {}", appeal);
-    }
-}
-
-#[allow(dead_code)]
-pub fn print_recipes_semi_compact(recipes: Vec<Recipe>) {
     for (i, recipe) in recipes.iter().enumerate() {
         let dept = match recipe.potion_kind.department {
             Department::Health => "Health",
@@ -62,22 +40,50 @@ pub fn print_recipes_semi_compact(recipes: Vec<Recipe>) {
             Department::Provisions => "Provisions",
         };
 
-        print!(
-            "({}) {}: {:?} | Parts: {:?}, {:?} | Ingredients: [",
-            i + 1,
-            dept,
-            recipe.potion_kind.key,
-            recipe.potion_kind.parts.0,
-            recipe.potion_kind.parts.1
-        );
+        let ingredients: Vec<String> = recipe
+            .ingredients
+            .iter()
+            .map(|ing| format!("{:?} ({})", ing.key, ing.process.to_human()))
+            .collect();
 
-        for (j, ingredient) in recipe.ingredients.iter().enumerate() {
-            if j > 0 {
-                print!(", ");
+        let mut tags = String::new();
+
+        match recipe.potion_kind.toxicity_effect {
+            ToxicityEffect::ToxicPositive => {
+                if matches!(
+                    recipe.overall_toxicity,
+                    OverallToxicity::Toxic | OverallToxicity::VeryToxic
+                ) {
+                    tags.push_str("+");
+                } else {
+                    tags.push_str("-")
+                }
             }
-            print!("{:?} ({})", ingredient.key, ingredient.process.to_human());
+            ToxicityEffect::ToxicNegative => {
+                if matches!(
+                    recipe.overall_toxicity,
+                    OverallToxicity::Toxic | OverallToxicity::VeryToxic
+                ) {
+                    tags.push_str("-");
+                } else {
+                    tags.push_str("+")
+                }
+            }
         }
+        tags.push_str(format!("{:?}", recipe.overall_toxicity).as_str());
 
-        println!("] | Appeal: {}", recipe.overall_appeal);
+        table.add_row(Row::new(vec![
+            Cell::new(&(i + 1).to_string()),
+            Cell::new(dept),
+            Cell::new(&format!("{:?}", recipe.potion_kind.key)),
+            // Cell::new(&format!("{:?}", recipe.potion_kind.parts.0)),
+            // Cell::new(&format!("{:?}", recipe.potion_kind.parts.1)),
+            Cell::new(&ingredients.join(", ")),
+            Cell::new(&format!("{:}", tags)),
+            Cell::new(&format!("{:?}", recipe.overall_taste)),
+            Cell::new(&recipe.overall_appeal.to_string()),
+        ]));
     }
+
+    table.printstd();
 }

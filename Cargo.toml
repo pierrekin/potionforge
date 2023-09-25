@@ -18,3 +18,4 @@ console = { version = "0.15", default-features = false, features = [
 ] }
 coin_cbc = "0.1.8"
 serde_yaml = "0.8"
+prettytable-rs = "0.8.0"

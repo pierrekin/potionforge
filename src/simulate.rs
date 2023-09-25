@@ -1,7 +1,7 @@
 use crate::models::{
     self, AppealLookup, AppealMapNegative, AppealMapPositive, Element, GetByParts, Ingredient,
-    IngredientPart, IngredientParts, IngredientProcess, MainEffect, OverallTaste, PotionKind,
-    Recipe, Sweetness, Taste, TasteEffect, Tastiness, ToxicityEffect, ValidCombination,
+    IngredientPart, IngredientParts, IngredientProcess, MainEffect, OverallTaste, OverallToxicity,
+    PotionKind, Recipe, Sweetness, Taste, TasteEffect, Tastiness, ToxicityEffect, ValidCombination,
 };
 
 pub fn process_cut(ingredient: &Ingredient) -> Option<Vec<Ingredient>> {
@@ -353,7 +353,7 @@ pub fn determine_taste_appeal(potion_kind: &PotionKind, overall_taste: OverallTa
     }
 }
 
-fn determine_toxicity_appeal(potion_kind: &PotionKind, parts: &Vec<IngredientPart>) -> i32 {
+fn determine_overall_toxicity(parts: &Vec<IngredientPart>) -> OverallToxicity {
     let toxicity: i32 = parts
         .iter()
         .map(|part| match part {
@@ -363,37 +363,37 @@ fn determine_toxicity_appeal(potion_kind: &PotionKind, parts: &Vec<IngredientPar
         })
         .sum();
 
+    if toxicity >= 2 {
+        OverallToxicity::VeryToxic
+    } else if toxicity == 1 {
+        OverallToxicity::Toxic
+    } else if toxicity == 0 {
+        OverallToxicity::Neutral
+    } else if toxicity == -1 {
+        OverallToxicity::Antitoxic
+    } else if toxicity <= -2 {
+        OverallToxicity::Veryantitoxic
+    } else {
+        unreachable!()
+    }
+}
+
+fn determine_toxicity_appeal(potion_kind: &PotionKind, overall_toxicity: OverallToxicity) -> i32 {
     match potion_kind.toxicity_effect {
-        ToxicityEffect::ToxicPositive => {
-            if toxicity >= 2 {
-                20
-            } else if toxicity == 1 {
-                10
-            } else if toxicity == 0 {
-                0
-            } else if toxicity == -1 {
-                -20
-            } else if toxicity <= -2 {
-                -50
-            } else {
-                unreachable!()
-            }
-        }
-        ToxicityEffect::ToxicNegative => {
-            if toxicity >= 2 {
-                -50
-            } else if toxicity == 1 {
-                -20
-            } else if toxicity == 0 {
-                0
-            } else if toxicity == -1 {
-                10
-            } else if toxicity <= -2 {
-                20
-            } else {
-                unreachable!()
-            }
-        }
+        ToxicityEffect::ToxicPositive => match overall_toxicity {
+            OverallToxicity::VeryToxic => 20,
+            OverallToxicity::Toxic => 10,
+            OverallToxicity::Neutral => 0,
+            OverallToxicity::Antitoxic => -20,
+            OverallToxicity::Veryantitoxic => -50,
+        },
+        ToxicityEffect::ToxicNegative => match overall_toxicity {
+            OverallToxicity::VeryToxic => -50,
+            OverallToxicity::Toxic => -20,
+            OverallToxicity::Neutral => 0,
+            OverallToxicity::Antitoxic => 10,
+            OverallToxicity::Veryantitoxic => 20,
+        },
     }
 }
 
@@ -411,10 +411,11 @@ fn determine_overall_appeal(
     potion_kind: &PotionKind,
     parts: &Vec<IngredientPart>,
     overall_taste: OverallTaste,
+    overall_toxicity: OverallToxicity,
 ) -> i32 {
     determine_purity_appeal(&parts)
         + determine_taste_appeal(potion_kind, overall_taste)
-        + determine_toxicity_appeal(potion_kind, parts)
+        + determine_toxicity_appeal(potion_kind, overall_toxicity)
 }
 
 pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
@@ -431,12 +432,15 @@ pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
     let potion_kind = models::POTION_KINDS.get_by_parts(valid_combination);
 
     let overall_taste = determine_overall_taste(&parts);
-    let overall_appeal = determine_overall_appeal(potion_kind, &parts, overall_taste);
+    let overall_toxicity = determine_overall_toxicity(&parts);
+    let overall_appeal =
+        determine_overall_appeal(potion_kind, &parts, overall_taste, overall_toxicity);
 
     Some(Recipe {
         potion_kind: potion_kind.clone(),
         ingredients: ingredients.to_vec(),
         overall_taste: overall_taste,
+        overall_toxicity: overall_toxicity,
         overall_appeal: overall_appeal,
     })
 }

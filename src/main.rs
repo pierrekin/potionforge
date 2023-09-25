@@ -39,5 +39,5 @@ fn main() {
         .sum();
 
     println!("Total Appeal: {}", total_appeal);
-    printer::print_recipes_semi_compact(recommendations);
+    printer::print_recipes_table(recommendations);
 }
