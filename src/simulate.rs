@@ -31,11 +31,11 @@ pub fn process_blanch(ingredient: &Ingredient) -> Option<Ingredient> {
 
 pub fn process_dry(ingredient: &Ingredient) -> Option<Ingredient> {
     match &ingredient.parts {
-        IngredientParts::Raw(a, _, c, _) => Some(Ingredient {
+        IngredientParts::Raw(a, _, _, d) => Some(Ingredient {
             key: ingredient.key.clone(),
             process: IngredientProcess::Dried,
             kind: ingredient.kind.clone(),
-            parts: IngredientParts::Dried(a.clone(), c.clone()),
+            parts: IngredientParts::Dried(a.clone(), d.clone()),
         }),
         _ => None,
     }
@@ -374,20 +374,13 @@ pub fn find_dominant_main_effect(parts: &[IngredientPart]) -> Option<MainEffect>
 }
 
 fn determine_overall_purity(parts: &[IngredientPart]) -> OverallPurity {
-    let mut purity: i32 = 0;
     for part in parts {
         match part {
-            IngredientPart::Stimulant => purity += 1,
-            IngredientPart::Impurity => purity -= 1,
+            IngredientPart::Impurity => return OverallPurity::Impure,
             _ => {}
         }
     }
-
-    if purity < 0 {
-        OverallPurity::Impure
-    } else {
-        OverallPurity::Neutral
-    }
+    OverallPurity::Neutral
 }
 
 pub fn determine_overall_taste(parts: &Vec<IngredientPart>) -> OverallTaste {

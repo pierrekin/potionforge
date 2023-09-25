@@ -71,7 +71,9 @@ pub fn print_recipes_table(recipes: &Vec<Recipe>) {
 
         let toxicity_tag = match recipe.potion_kind.toxicity_effect {
             ToxicityEffect::ToxicPositive => {
-                if matches!(
+                if matches!(recipe.overall_toxicity, OverallToxicity::Neutral) {
+                    "".to_string()
+                } else if matches!(
                     recipe.overall_toxicity,
                     OverallToxicity::Toxic | OverallToxicity::VeryToxic
                 ) {
@@ -81,7 +83,9 @@ pub fn print_recipes_table(recipes: &Vec<Recipe>) {
                 }
             }
             ToxicityEffect::ToxicNegative => {
-                if matches!(
+                if matches!(recipe.overall_toxicity, OverallToxicity::Neutral) {
+                    "".to_string()
+                } else if matches!(
                     recipe.overall_toxicity,
                     OverallToxicity::Toxic | OverallToxicity::VeryToxic
                 ) {
@@ -94,7 +98,9 @@ pub fn print_recipes_table(recipes: &Vec<Recipe>) {
 
         let taste_tag = match recipe.potion_kind.taste_effect {
             TasteEffect::TastyPositive => {
-                if matches!(
+                if matches!(recipe.overall_taste, OverallTaste::Bland) {
+                    "".to_string()
+                } else if matches!(
                     recipe.overall_taste,
                     OverallTaste::Tasty
                         | OverallTaste::Flavorful
@@ -108,7 +114,9 @@ pub fn print_recipes_table(recipes: &Vec<Recipe>) {
                 }
             }
             TasteEffect::TastyNegative => {
-                if matches!(
+                if matches!(recipe.overall_taste, OverallTaste::Bland) {
+                    "".to_string()
+                } else if matches!(
                     recipe.overall_taste,
                     OverallTaste::Tasty
                         | OverallTaste::Bitter
