@@ -11,10 +11,7 @@ mod tests {
         potion::{GetByKey, GetName},
     };
 
-    use super::{
-        potion::{INGREDIENTS, POTION_KINDS},
-        *,
-    };
+    use super::potion::{INGREDIENTS, POTION_KINDS};
 
     #[test]
     fn test_get_potion_kind_by_key() {
