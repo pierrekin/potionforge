@@ -108,7 +108,7 @@ fn maximise_recipes(
 
     // Create the problem.
     let mut model = Model::default();
-    model.set_parameter("logLevel", "0");
+    model.set_parameter("logLevel", "1");
 
     // Set objective sense.
     model.set_obj_sense(Sense::Maximize);
@@ -168,7 +168,7 @@ fn maximise_appeal(
 
     // Create the problem.
     let mut model = Model::default();
-    model.set_parameter("logLevel", "0");
+    model.set_parameter("logLevel", "1");
 
     // Set objective sense.
     model.set_obj_sense(Sense::Maximize);

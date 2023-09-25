@@ -30,12 +30,14 @@ fn main() {
     // TODO: Troubleshoot non-determinism on key order.
     available_ingredient_keys.sort();
 
+    println!("Enumerating possible recipes...");
     let possible_recipes = permute::get_all_recipes(
         available_ingredient_keys,
         vec!["cut", "ferment", "infuse"],
         config.arcane_power,
     );
 
+    println!("Recommending optimal recipes...");
     let recommendations =
         recommend::recommend(possible_recipes, &config.ingredients, config.utilisation);
     let total_appeal: i32 = recommendations
