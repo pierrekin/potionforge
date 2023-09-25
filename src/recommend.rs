@@ -2,6 +2,7 @@ extern crate coin_cbc;
 
 use coin_cbc::{raw::Status, Col, Model, Sense};
 use itertools::Itertools;
+use rayon::iter::empty;
 
 use crate::models::{Department, GetByKey, IngredientCounts, Recipe, INGREDIENTS};
 
@@ -75,7 +76,7 @@ fn maximise_recipes(
     model.set_obj_sense(Sense::Maximize);
 
     // Objective function: maximize the number of selected recipes
-    let objectives = vec![1.0; available_ingredients.len()];
+    let objectives = vec![1.0; possible_recipes.len()];
 
     // The columns: a binary variable for each recipe with coeffecient 1.0.
     let columns = create_binary_columns(&mut model, possible_recipes.len(), objectives);
@@ -91,9 +92,11 @@ fn maximise_recipes(
 
     // Solve the problem. Returns the solution
     let solution = model.solve();
+    let raw_solution = solution.raw().to_owned();
 
-    // Check the solver finished.
-    assert_eq!(Status::Finished, solution.raw().status());
+    // Check the solver finished and solution is proven optimal.
+    assert_eq!(Status::Finished, raw_solution.status());
+    assert!(raw_solution.is_proven_optimal());
 
     solution.raw().obj_value() as i32
 }
@@ -145,9 +148,11 @@ fn maximise_appeal(
 
     // Solve the problem. Returns the solution
     let solution = model.solve();
+    let raw_solution = solution.raw().to_owned();
 
-    // Check the solver finished.
-    assert_eq!(Status::Finished, solution.raw().status());
+    // Check the solver finished and solution is proven optimal.
+    assert_eq!(Status::Finished, raw_solution.status());
+    assert!(raw_solution.is_proven_optimal());
 
     columns
         .iter()
@@ -161,7 +166,6 @@ pub fn recommend(
     possible_recipes: Vec<Recipe>,
     available_ingredients: &IngredientCounts,
 ) -> Vec<Recipe> {
-    // let num_recipes = maximise_recipes(&possible_recipes, available_ingredients);
-    let num_recipes = 0;
+    let num_recipes = maximise_recipes(&possible_recipes, available_ingredients);
     maximise_appeal(&possible_recipes, available_ingredients, num_recipes)
 }
