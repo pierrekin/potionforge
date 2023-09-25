@@ -2,7 +2,7 @@ extern crate coin_cbc;
 
 use coin_cbc::{raw::Status, Col, Model, Sense};
 use itertools::Itertools;
-use rayon::iter::empty;
+
 
 use crate::models::{Department, GetByKey, IngredientCounts, Recipe, INGREDIENTS};
 

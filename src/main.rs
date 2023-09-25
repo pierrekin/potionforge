@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
-use models::{IngredientCounts, IngredientKey};
+use models::{IngredientCounts};
 use serde::Deserialize;
 
 mod models;

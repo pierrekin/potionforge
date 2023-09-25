@@ -1,10 +1,10 @@
 use crate::models::{GetByKey, Ingredient, IngredientKey, Recipe, INGREDIENTS};
 use crate::simulate;
-use console::style;
-use indicatif::{ProgressBar, ProgressStyle};
+
+
 use rayon::prelude::*;
 use std::ops::Range;
-use std::sync::Mutex;
+
 
 const SIMULATE_SUBRANGE_SIZE: i64 = 5_000;
 
