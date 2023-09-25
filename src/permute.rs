@@ -69,28 +69,7 @@ fn generate_combination(ingredients: &[Ingredient], k: i64, index: i64) -> Vec<I
     combination
 }
 
-fn report_progress(step: i64, total: i64, msg: &str) {
-    println!(
-        "{} {}",
-        style(format!("[{}/{}]", step, total)).bold().dim(),
-        msg
-    );
-}
-
-fn setup_progress_bar(total_combinations: i64) -> Mutex<ProgressBar> {
-    let progress = Mutex::new(ProgressBar::new(total_combinations as u64));
-    progress.lock().unwrap().set_style(
-        ProgressStyle::default_bar()
-            .template(
-                "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta_precise}) {msg}",
-            )
-            .unwrap()
-            .progress_chars("#>-"),
-    );
-    progress
-}
-
-fn check_combination(combination: &Vec<Ingredient>) -> bool {
+fn validate_combination(combination: &Vec<Ingredient>) -> bool {
     // TODO: This shouldn't be hard coded here.
     let mut keys = [false; 16];
 
@@ -109,7 +88,7 @@ fn solve_subrange(range: Range<i64>, all_ingredients: &[Ingredient], k: i64) -> 
     range
         .filter_map(|index| {
             let combination = generate_combination(&all_ingredients, k, index as i64);
-            if check_combination(&combination) {
+            if validate_combination(&combination) {
                 simulate::simulate(&combination.as_slice())
             } else {
                 None
@@ -123,7 +102,6 @@ pub fn get_all_recipes(
     processes: Vec<&str>,
     r: i64,
 ) -> Vec<Recipe> {
-    report_progress(1, r, "Permuting ingredients...");
     let raw_ingredients: Vec<_> = raw_ingredients
         .iter()
         .map(|key| INGREDIENTS.get_by_key(key))
@@ -131,18 +109,23 @@ pub fn get_all_recipes(
 
     let all_ingredients = permute_ingredients(raw_ingredients.as_slice(), processes);
 
-    let mut result = Vec::new();
-
-    for k in 2..=r {
-        let total_combinations = binomial_coefficient(all_ingredients.len() as i64, k);
-        for index in 0..total_combinations {
-            let combination = generate_combination(&all_ingredients, k, index as i64);
-            if check_combination(&combination) {
-                let simulated = simulate::simulate(combination.as_slice());
-                result.extend(simulated);
-            }
-        }
-    }
-
-    result
+    (2..r)
+        .into_iter()
+        .flat_map(|k| {
+            let total_combinations = binomial_coefficient(all_ingredients.len() as i64, k);
+            (0..total_combinations)
+                .into_par_iter()
+                .filter_map(|index| {
+                    let combination = generate_combination(&all_ingredients, k, index as i64);
+                    if validate_combination(&combination) {
+                        Some(simulate::simulate(combination.as_slice()))
+                    } else {
+                        None
+                    }
+                })
+                .flatten()
+                .collect::<Vec<_>>()
+                .into_iter()
+        })
+        .collect()
 }
