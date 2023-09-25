@@ -8,7 +8,7 @@ use crate::models::{
 };
 use prettytable::{Cell, Row, Table};
 
-pub fn print_ingredients_table(ingredients: &Vec<Ingredient>) {
+pub fn _print_ingredients_table(ingredients: &Vec<Ingredient>) {
     let mut table = Table::new();
     table.add_row(Row::new(vec![
         Cell::new("Index"),
@@ -23,25 +23,6 @@ pub fn print_ingredients_table(ingredients: &Vec<Ingredient>) {
             Cell::new(&format!("{:?}", ingredient.key)),
             Cell::new(&format!("{:?}", ingredient.kind)),
             Cell::new(&format!("{:?}", ingredient.process)),
-        ]));
-    }
-
-    table.printstd();
-}
-
-pub fn print_combinations(combinations: &Vec<Vec<Ingredient>>) {
-    let mut table = Table::new();
-    table.add_row(Row::new(vec![Cell::new("Index"), Cell::new("Combination")]));
-
-    for (i, combination) in combinations.iter().enumerate() {
-        let ingredients: Vec<String> = combination
-            .iter()
-            .map(|ingredient| format!("{:?} ({:?})", ingredient.key, ingredient.process))
-            .collect();
-
-        table.add_row(Row::new(vec![
-            Cell::new(&(i + 1).to_string()),
-            Cell::new(&ingredients.join(", ")),
         ]));
     }
 
@@ -151,6 +132,7 @@ pub fn print_recipes_table(recipes: &Vec<Recipe>) {
             OverallPurity::VeryImpure => "-VeryImpure",
         };
 
+        // Normalise the ingredients list.
         let mut local_ingredients = ingredients.clone();
         local_ingredients.sort();
 
@@ -169,7 +151,26 @@ pub fn print_recipes_table(recipes: &Vec<Recipe>) {
     table.printstd();
 }
 
-pub fn print_combination(combination: &Vec<Ingredient>) {
+pub fn _print_combinations_table(combinations: &Vec<Vec<Ingredient>>) {
+    let mut table = Table::new();
+    table.add_row(Row::new(vec![Cell::new("Index"), Cell::new("Combination")]));
+
+    for (i, combination) in combinations.iter().enumerate() {
+        let ingredients: Vec<String> = combination
+            .iter()
+            .map(|ingredient| format!("{:?} ({:?})", ingredient.key, ingredient.process))
+            .collect();
+
+        table.add_row(Row::new(vec![
+            Cell::new(&(i + 1).to_string()),
+            Cell::new(&ingredients.join(", ")),
+        ]));
+    }
+
+    table.printstd();
+}
+
+pub fn _print_combination(combination: &Vec<Ingredient>) {
     let ingredients: Vec<String> = combination
         .iter()
         .map(|ing| format!("{:?} ({:?})", ing.key, ing.process))

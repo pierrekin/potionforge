@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::Read;
 
-use itertools::Itertools;
 use models::IngredientCounts;
 use serde::Deserialize;
 
@@ -26,8 +25,10 @@ fn main() {
     let config: Config = serde_yaml::from_str(&config_contents).unwrap();
     println!("{:?}", config);
 
-    let mut available_ingredient_keys: Vec<_> = config.ingredients.keys().sorted().collect();
-    available_ingredient_keys.reverse();
+    let mut available_ingredient_keys: Vec<_> = config.ingredients.keys().collect();
+
+    // TODO: Troubleshoot non-determinism on key order.
+    available_ingredient_keys.sort();
 
     let possible_recipes = permute::get_all_recipes(
         available_ingredient_keys,
