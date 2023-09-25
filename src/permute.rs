@@ -1,12 +1,6 @@
-
-use std::collections::HashSet;
-
-
-
 use crate::models::{GetByKey, Ingredient, IngredientKey, Recipe, INGREDIENTS};
 use crate::simulate;
 
-use itertools::Itertools;
 use rayon::prelude::*;
 
 pub fn permute_ingredient(
@@ -109,21 +103,14 @@ pub fn get_all_recipes(
 
     let all_ingredients = permute_ingredients(raw_ingredients.as_slice(), processes);
 
-    let mut i = 0;
-
-    let mut debug: HashSet<Vec<Ingredient>> = HashSet::new();
-
-    let result = (2..=r)
+    (2..=r)
         .into_iter()
         .flat_map(|k| {
             let total_combinations = binomial_coefficient(all_ingredients.len() as i64, k);
             (0..total_combinations)
-                // .into_par_iter()
-                .into_iter()
+                .into_par_iter()
                 .filter_map(|index| {
-                    i += 1;
                     let combination = generate_combination(&all_ingredients, k, index as i64);
-                    debug.insert(combination.clone());
                     if !validate_combination(&combination) {
                         return None;
                     }
@@ -135,7 +122,5 @@ pub fn get_all_recipes(
                 .collect::<Vec<_>>()
                 .into_iter()
         })
-        .collect();
-
-    result
+        .collect()
 }
