@@ -1,4 +1,8 @@
+use std::fs::File;
+use std::io::Read;
+
 use models::{IngredientCounts, IngredientKey};
+use serde::Deserialize;
 
 mod models;
 mod permute;
@@ -6,27 +10,28 @@ mod printer;
 mod recommend;
 mod simulate;
 
-fn main() {
-    let mut available_ingredients = IngredientCounts::new();
-    available_ingredients.insert(IngredientKey::Asporeus, 1);
-    available_ingredients.insert(IngredientKey::Catnip, 1);
-    available_ingredients.insert(IngredientKey::Elven, 1);
-    available_ingredients.insert(IngredientKey::Flyagaric, 1);
-    available_ingredients.insert(IngredientKey::Sage, 1);
-    available_ingredients.insert(IngredientKey::Wizards, 1);
-    available_ingredients.insert(IngredientKey::Nightshade, 1);
-    available_ingredients.insert(IngredientKey::Pluteus, 1);
-    available_ingredients.insert(IngredientKey::Thyme, 1);
-    available_ingredients.insert(IngredientKey::Wormwood, 1);
+#[derive(Debug, Deserialize)]
+struct Config {
+    arcane_power: i64,
+    ingredients: IngredientCounts,
+}
 
-    let available_ingredient_keys: Vec<_> = available_ingredients.keys().collect();
+fn main() {
+    let mut config_file = File::open("./config.yml").unwrap();
+    let mut config_contents = String::new();
+    config_file.read_to_string(&mut config_contents).unwrap();
+
+    let config: Config = serde_yaml::from_str(&config_contents).unwrap();
+    println!("{:?}", config);
+
+    let available_ingredient_keys: Vec<_> = config.ingredients.keys().collect();
 
     let possible_recipes = permute::get_all_recipes(
         available_ingredient_keys,
         vec!["cut", "ferment", "infuse"],
-        6,
+        config.arcane_power,
     );
 
-    let recommendations = recommend::recommend(possible_recipes, &available_ingredients);
+    let recommendations = recommend::recommend(possible_recipes, &config.ingredients);
     printer::print_recipes_semi_compact(recommendations);
 }

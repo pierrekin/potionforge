@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use std::ops::Range;
 use std::sync::Mutex;
 
-const SIMULATE_SUBRANGE_SIZE: usize = 5_000;
+const SIMULATE_SUBRANGE_SIZE: i64 = 5_000;
 
 pub fn permute_ingredient(
     ingredient: &Ingredient,
@@ -43,7 +43,7 @@ pub fn permute_ingredients(ingredients: &[&Ingredient], processes: Vec<&str>) ->
         .collect()
 }
 
-fn binomial_coefficient(n: usize, k: usize) -> usize {
+fn binomial_coefficient(n: i64, k: i64) -> i64 {
     let mut coeff = 1;
     for i in 0..k {
         coeff *= n - i;
@@ -52,9 +52,9 @@ fn binomial_coefficient(n: usize, k: usize) -> usize {
     coeff
 }
 
-fn generate_combination(ingredients: &[Ingredient], k: usize, index: usize) -> Vec<Ingredient> {
-    let n = ingredients.len();
-    let mut combination = Vec::with_capacity(k);
+fn generate_combination(ingredients: &[Ingredient], k: i64, index: i64) -> Vec<Ingredient> {
+    let n = ingredients.len() as i64;
+    let mut combination = Vec::with_capacity(k as usize);
     let mut elements = ingredients.to_vec();
 
     let mut remaining_index = index;
@@ -62,14 +62,14 @@ fn generate_combination(ingredients: &[Ingredient], k: usize, index: usize) -> V
     for i in 0..k {
         let binom = binomial_coefficient(n - i - 1, k - i - 1);
         let chosen = remaining_index / binom;
-        combination.push(elements.remove(chosen));
+        combination.push(elements.remove(chosen as usize));
         remaining_index %= binom;
     }
 
     combination
 }
 
-fn report_progress(step: usize, total: usize, msg: &str) {
+fn report_progress(step: i64, total: i64, msg: &str) {
     println!(
         "{} {}",
         style(format!("[{}/{}]", step, total)).bold().dim(),
@@ -77,7 +77,7 @@ fn report_progress(step: usize, total: usize, msg: &str) {
     );
 }
 
-fn setup_progress_bar(total_combinations: usize) -> Mutex<ProgressBar> {
+fn setup_progress_bar(total_combinations: i64) -> Mutex<ProgressBar> {
     let progress = Mutex::new(ProgressBar::new(total_combinations as u64));
     progress.lock().unwrap().set_style(
         ProgressStyle::default_bar()
@@ -90,11 +90,30 @@ fn setup_progress_bar(total_combinations: usize) -> Mutex<ProgressBar> {
     progress
 }
 
-fn solve_subrange(range: Range<usize>, all_ingredients: &[Ingredient], k: usize) -> Vec<Recipe> {
+fn check_combination(combination: &Vec<Ingredient>) -> bool {
+    // TODO: This shouldn't be hard coded here.
+    let mut keys = [false; 16];
+
+    for ingredient in combination {
+        let index = ingredient.key as usize;
+        if keys[index] {
+            return false;
+        }
+        keys[index] = true;
+    }
+
+    true
+}
+
+fn solve_subrange(range: Range<i64>, all_ingredients: &[Ingredient], k: i64) -> Vec<Recipe> {
     range
         .filter_map(|index| {
-            let combination = generate_combination(&all_ingredients, k, index);
-            simulate::simulate(combination.as_slice())
+            let combination = generate_combination(&all_ingredients, k, index as i64);
+            if check_combination(&combination) {
+                simulate::simulate(&combination.as_slice())
+            } else {
+                None
+            }
         })
         .collect()
 }
@@ -102,7 +121,7 @@ fn solve_subrange(range: Range<usize>, all_ingredients: &[Ingredient], k: usize)
 pub fn get_all_recipes(
     raw_ingredients: Vec<&IngredientKey>,
     processes: Vec<&str>,
-    r: usize,
+    r: i64,
 ) -> Vec<Recipe> {
     report_progress(1, r, "Permuting ingredients...");
     let raw_ingredients: Vec<_> = raw_ingredients
@@ -112,32 +131,18 @@ pub fn get_all_recipes(
 
     let all_ingredients = permute_ingredients(raw_ingredients.as_slice(), processes);
 
-    let all_recipes: Vec<_> = (2..=r)
-        .flat_map(|k| {
-            report_progress(k - 1, r, &format!("Simulating recipes k={}...", k));
+    let mut result = Vec::new();
 
-            let total_combinations = binomial_coefficient(all_ingredients.len(), k);
-            let progress = setup_progress_bar(total_combinations);
+    for k in 2..=r {
+        let total_combinations = binomial_coefficient(all_ingredients.len() as i64, k);
+        for index in 0..total_combinations {
+            let combination = generate_combination(&all_ingredients, k, index as i64);
+            if check_combination(&combination) {
+                let simulated = simulate::simulate(combination.as_slice());
+                result.extend(simulated);
+            }
+        }
+    }
 
-            let num_subranges = total_combinations / SIMULATE_SUBRANGE_SIZE;
-            let subranges: Vec<_> = (0..num_subranges)
-                .map(|i| i * SIMULATE_SUBRANGE_SIZE..(i + 1) * SIMULATE_SUBRANGE_SIZE)
-                .collect();
-
-            let k_recipes: Vec<_> = subranges
-                .into_par_iter()
-                .map(|range| {
-                    progress.lock().unwrap().inc(range.len() as u64);
-                    solve_subrange(range, &all_ingredients, k)
-                })
-                .flatten()
-                .collect();
-
-            progress.lock().unwrap().finish_and_clear();
-
-            k_recipes
-        })
-        .collect();
-
-    all_recipes
+    result
 }

@@ -99,6 +99,7 @@ pub enum IngredientKey {
     Sage,
     Thyme,
     Wormwood,
+    Anise,
     Deadmans,
     Deathcap,
     Elven,
@@ -106,6 +107,7 @@ pub enum IngredientKey {
     Pluteus,
     Wizards,
     Asporeus,
+    Stinkhorn,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -351,9 +353,9 @@ pub struct Recipe {
     pub overall_appeal: i32,
 }
 
-pub type IngredientCounts = HashMap<IngredientKey, usize>;
+pub type IngredientCounts = HashMap<IngredientKey, i32>;
 
-pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
+pub static INGREDIENTS: [(IngredientKey, Ingredient); 16] = [
     (
         IngredientKey::Catnip,
         Ingredient {
@@ -449,6 +451,20 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
                 IngredientPart::Antitoxin,
                 IngredientPart::Taste(Taste::Sweetness(Sweetness::Bitter)),
                 IngredientPart::Element(Element::Earth),
+            ),
+        },
+    ),
+    (
+        IngredientKey::Anise,
+        Ingredient {
+            key: IngredientKey::Anise,
+            process: IngredientProcess::Raw,
+            kind: Kind::Herb,
+            parts: IngredientParts::Raw(
+                IngredientPart::MainEffect(MainEffect::Bone),
+                IngredientPart::Antitoxin,
+                IngredientPart::Taste(Taste::Sweetness(Sweetness::Sweet)),
+                IngredientPart::Impurity,
             ),
         },
     ),
@@ -550,9 +566,23 @@ pub static INGREDIENTS: [(IngredientKey, Ingredient); 14] = [
             ),
         },
     ),
+    (
+        IngredientKey::Stinkhorn,
+        Ingredient {
+            key: IngredientKey::Stinkhorn,
+            process: IngredientProcess::Raw,
+            kind: Kind::Mushroom,
+            parts: IngredientParts::Raw(
+                IngredientPart::Taste(Taste::Tastiness(Tastiness::Unsavory)),
+                IngredientPart::MainEffect(MainEffect::Soul),
+                IngredientPart::Taste(Taste::Sweetness(Sweetness::Sweet)),
+                IngredientPart::Stimulant,
+            ),
+        },
+    ),
 ];
 
-pub static _INGREDIENTS_VALUES: [&Ingredient; 14] = [
+pub static _INGREDIENTS_VALUES: [&Ingredient; 16] = [
     &INGREDIENTS[0].1,
     &INGREDIENTS[1].1,
     &INGREDIENTS[2].1,
@@ -567,6 +597,8 @@ pub static _INGREDIENTS_VALUES: [&Ingredient; 14] = [
     &INGREDIENTS[11].1,
     &INGREDIENTS[12].1,
     &INGREDIENTS[13].1,
+    &INGREDIENTS[14].1,
+    &INGREDIENTS[15].1,
 ];
 
 pub trait GetName {
@@ -583,6 +615,7 @@ impl GetName for Ingredient {
             IngredientKey::Sage => "Sage",
             IngredientKey::Thyme => "Thyme",
             IngredientKey::Wormwood => "Wormwood",
+            IngredientKey::Anise => "Anise",
             IngredientKey::Deadmans => "Dead Man's Finger",
             IngredientKey::Deathcap => "Death Cap",
             IngredientKey::Elven => "Elven Saddle",
@@ -590,6 +623,7 @@ impl GetName for Ingredient {
             IngredientKey::Pluteus => "Pluteus",
             IngredientKey::Wizards => "Wizard's Hat",
             IngredientKey::Asporeus => "Asporeus",
+            IngredientKey::Stinkhorn => "Stinkhorn",
         }
     }
 }
@@ -764,26 +798,27 @@ pub trait GetByParts {
 impl GetByParts for [(PotionKindKey, PotionKind); 16] {
     fn get_by_parts(&self, valid_combination: ValidCombination) -> &PotionKind {
         match valid_combination {
-            ValidCombination(MainEffect::Cat, Element::Fire) => &self[0].1,
-            ValidCombination(MainEffect::Cat, Element::Water) => &self[1].1,
-            ValidCombination(MainEffect::Bone, Element::Fire) => &self[2].1,
-            ValidCombination(MainEffect::Bone, Element::Water) => &self[3].1,
-            ValidCombination(MainEffect::Soul, Element::Fire) => &self[4].1,
-            ValidCombination(MainEffect::Soul, Element::Water) => &self[5].1,
-            ValidCombination(MainEffect::Beast, Element::Fire) => &self[6].1,
-            ValidCombination(MainEffect::Beast, Element::Water) => &self[7].1,
-            ValidCombination(MainEffect::Cat, Element::Aether) => &self[8].1,
-            ValidCombination(MainEffect::Cat, Element::Earth) => &self[9].1,
-            ValidCombination(MainEffect::Bone, Element::Aether) => &self[10].1,
-            ValidCombination(MainEffect::Bone, Element::Earth) => &self[11].1,
-            ValidCombination(MainEffect::Soul, Element::Aether) => &self[12].1,
-            ValidCombination(MainEffect::Soul, Element::Earth) => &self[13].1,
-            ValidCombination(MainEffect::Beast, Element::Aether) => &self[14].1,
-            ValidCombination(MainEffect::Beast, Element::Earth) => &self[15].1,
+            ValidCombination(MainEffect::Cat, Element::Fire) => &self[0].1, // Speed
+            ValidCombination(MainEffect::Cat, Element::Water) => &self[1].1, // Slow
+            ValidCombination(MainEffect::Cat, Element::Aether) => &self[2].1, // Mana
+            ValidCombination(MainEffect::Cat, Element::Earth) => &self[3].1, // Warding
+            ValidCombination(MainEffect::Bone, Element::Fire) => &self[4].1, // Strength
+            ValidCombination(MainEffect::Bone, Element::Water) => &self[5].1, // Weakness
+            ValidCombination(MainEffect::Bone, Element::Aether) => &self[6].1, // Necromancy
+            ValidCombination(MainEffect::Bone, Element::Earth) => &self[7].1, // Skeleton
+            ValidCombination(MainEffect::Soul, Element::Fire) => &self[8].1, // Speech
+            ValidCombination(MainEffect::Soul, Element::Water) => &self[9].1, // Silence
+            ValidCombination(MainEffect::Soul, Element::Aether) => &self[10].1, // Conjuring
+            ValidCombination(MainEffect::Soul, Element::Earth) => &self[11].1, // Excorcism
+            ValidCombination(MainEffect::Beast, Element::Fire) => &self[12].1, // Vitality
+            ValidCombination(MainEffect::Beast, Element::Water) => &self[13].1, // Sleep
+            ValidCombination(MainEffect::Beast, Element::Aether) => &self[14].1, // Summoning
+            ValidCombination(MainEffect::Beast, Element::Earth) => &self[15].1, // Monster
         }
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct ValidCombination(MainEffect, Element);
 
 impl ValidCombination {
@@ -797,23 +832,25 @@ pub trait GetByKey<K, V> {
     fn get_by_key(&self, key: &K) -> &V;
 }
 
-impl GetByKey<IngredientKey, Ingredient> for [(IngredientKey, Ingredient); 14] {
+impl GetByKey<IngredientKey, Ingredient> for [(IngredientKey, Ingredient); 16] {
     fn get_by_key(&self, key: &IngredientKey) -> &Ingredient {
         match key {
-            IngredientKey::Lupine => &self[1].1,
             IngredientKey::Catnip => &self[0].1,
+            IngredientKey::Lupine => &self[1].1,
             IngredientKey::Mandrake => &self[2].1,
             IngredientKey::Nightshade => &self[3].1,
             IngredientKey::Sage => &self[4].1,
             IngredientKey::Thyme => &self[5].1,
             IngredientKey::Wormwood => &self[6].1,
-            IngredientKey::Deadmans => &self[7].1,
-            IngredientKey::Deathcap => &self[8].1,
-            IngredientKey::Elven => &self[9].1,
-            IngredientKey::Flyagaric => &self[10].1,
-            IngredientKey::Pluteus => &self[11].1,
-            IngredientKey::Wizards => &self[12].1,
-            IngredientKey::Asporeus => &self[13].1,
+            IngredientKey::Anise => &self[7].1,
+            IngredientKey::Deadmans => &self[8].1,
+            IngredientKey::Deathcap => &self[9].1,
+            IngredientKey::Elven => &self[10].1,
+            IngredientKey::Flyagaric => &self[11].1,
+            IngredientKey::Pluteus => &self[12].1,
+            IngredientKey::Wizards => &self[13].1,
+            IngredientKey::Asporeus => &self[14].1,
+            IngredientKey::Stinkhorn => &self[15].1,
         }
     }
 }

@@ -63,9 +63,13 @@ fn create_department_constraints(model: &mut Model, columns: &[Col], recipes: &[
     }
 }
 
-fn part_1(possible_recipes: &Vec<Recipe>, available_ingredients: &IngredientCounts) -> i32 {
+fn maximise_recipes(
+    possible_recipes: &Vec<Recipe>,
+    available_ingredients: &IngredientCounts,
+) -> i32 {
     // Create the problem.
     let mut model = Model::default();
+    model.set_parameter("logLevel", "0");
 
     // Set objective sense.
     model.set_obj_sense(Sense::Maximize);
@@ -91,15 +95,6 @@ fn part_1(possible_recipes: &Vec<Recipe>, available_ingredients: &IngredientCoun
     // Check the solver finished.
     assert_eq!(Status::Finished, solution.raw().status());
 
-    // Print the solution (debug).
-    // solution.raw().print_solution();
-
-    for (column, recipe) in columns.iter().zip(possible_recipes.iter()) {
-        if solution.col(*column) == 1.0 {
-            dbg!(&recipe.potion_kind.key, &recipe.overall_appeal);
-        }
-    }
-
     solution.raw().obj_value() as i32
 }
 
@@ -120,13 +115,14 @@ fn create_number_constraints(model: &mut Model, columns: &[Col], min_recipes: i3
     }
 }
 
-fn part_2(
+fn maximise_appeal(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
     min_recipes: i32,
 ) -> Vec<Recipe> {
     // Create the problem.
     let mut model = Model::default();
+    model.set_parameter("logLevel", "0");
 
     // Set objective sense.
     model.set_obj_sense(Sense::Maximize);
@@ -153,9 +149,6 @@ fn part_2(
     // Check the solver finished.
     assert_eq!(Status::Finished, solution.raw().status());
 
-    // Print the solution (debug).
-    // solution.raw().print_solution();
-
     columns
         .iter()
         .zip(possible_recipes.iter())
@@ -168,10 +161,7 @@ pub fn recommend(
     possible_recipes: Vec<Recipe>,
     available_ingredients: &IngredientCounts,
 ) -> Vec<Recipe> {
-    let num_recommended_recipes = part_1(&possible_recipes, available_ingredients);
-    part_2(
-        &possible_recipes,
-        available_ingredients,
-        num_recommended_recipes,
-    )
+    // let num_recipes = maximise_recipes(&possible_recipes, available_ingredients);
+    let num_recipes = 0;
+    maximise_appeal(&possible_recipes, available_ingredients, num_recipes)
 }

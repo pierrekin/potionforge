@@ -1,5 +1,6 @@
 use crate::models::{Department, Recipe};
 
+#[allow(dead_code)]
 pub fn print_recipes(recipes: Vec<Recipe>) {
     for (i, recipe) in recipes.iter().enumerate() {
         println!("Recipe {}:", i + 1);
@@ -29,6 +30,7 @@ pub fn print_recipes(recipes: Vec<Recipe>) {
     }
 }
 
+#[allow(dead_code)]
 pub fn print_recipes_compact(recipes: Vec<Recipe>) {
     for recipe in recipes {
         let potion_kind = &recipe.potion_kind;
@@ -51,6 +53,7 @@ pub fn print_recipes_compact(recipes: Vec<Recipe>) {
     }
 }
 
+#[allow(dead_code)]
 pub fn print_recipes_semi_compact(recipes: Vec<Recipe>) {
     for (i, recipe) in recipes.iter().enumerate() {
         let dept = match recipe.potion_kind.department {

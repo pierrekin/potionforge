@@ -1,7 +1,7 @@
 use crate::models::{
     self, AppealLookup, AppealMapNegative, AppealMapPositive, Element, GetByParts, Ingredient,
     IngredientPart, IngredientParts, IngredientProcess, MainEffect, OverallTaste, PotionKind,
-    Recipe, Sweetness, Taste, TasteEffect, Tastiness, ValidCombination,
+    Recipe, Sweetness, Taste, TasteEffect, Tastiness, ToxicityEffect, ValidCombination,
 };
 
 pub fn process_cut(ingredient: &Ingredient) -> Option<Vec<Ingredient>> {
@@ -300,7 +300,7 @@ pub fn find_dominant_main_effect(parts: &[IngredientPart]) -> Option<MainEffect>
     }
 }
 
-pub fn determine_overall_taste(parts: Vec<IngredientPart>) -> OverallTaste {
+pub fn determine_overall_taste(parts: &Vec<IngredientPart>) -> OverallTaste {
     let mut tastiness: i32 = 0;
     let mut sweetness: i32 = 0;
 
@@ -353,8 +353,68 @@ pub fn determine_taste_appeal(potion_kind: &PotionKind, overall_taste: OverallTa
     }
 }
 
-fn determine_overall_appeal(potion_kind: &models::PotionKind, overall_taste: OverallTaste) -> i32 {
-    determine_taste_appeal(potion_kind, overall_taste)
+fn determine_toxicity_appeal(potion_kind: &PotionKind, parts: &Vec<IngredientPart>) -> i32 {
+    let toxicity: i32 = parts
+        .iter()
+        .map(|part| match part {
+            IngredientPart::Toxin => 1,
+            IngredientPart::Antitoxin => -1,
+            _ => 0,
+        })
+        .sum();
+
+    match potion_kind.toxicity_effect {
+        ToxicityEffect::ToxicPositive => {
+            if toxicity >= 2 {
+                20
+            } else if toxicity == 1 {
+                10
+            } else if toxicity == 0 {
+                0
+            } else if toxicity == -1 {
+                -20
+            } else if toxicity <= -2 {
+                -50
+            } else {
+                unreachable!()
+            }
+        }
+        ToxicityEffect::ToxicNegative => {
+            if toxicity >= 2 {
+                -50
+            } else if toxicity == 1 {
+                -20
+            } else if toxicity == 0 {
+                0
+            } else if toxicity == -1 {
+                10
+            } else if toxicity <= -2 {
+                20
+            } else {
+                unreachable!()
+            }
+        }
+    }
+}
+
+fn determine_purity_appeal(parts: &Vec<IngredientPart>) -> i32 {
+    parts
+        .iter()
+        .map(|part| match part {
+            IngredientPart::Impurity => -10,
+            _ => 0,
+        })
+        .sum()
+}
+
+fn determine_overall_appeal(
+    potion_kind: &PotionKind,
+    parts: &Vec<IngredientPart>,
+    overall_taste: OverallTaste,
+) -> i32 {
+    determine_purity_appeal(&parts)
+        + determine_taste_appeal(potion_kind, overall_taste)
+        + determine_toxicity_appeal(potion_kind, parts)
 }
 
 pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
@@ -370,9 +430,8 @@ pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
     let valid_combination = ValidCombination::new(main_effect.unwrap(), element.unwrap()).unwrap();
     let potion_kind = models::POTION_KINDS.get_by_parts(valid_combination);
 
-    let overall_taste = determine_overall_taste(parts);
-
-    let overall_appeal = determine_overall_appeal(potion_kind, overall_taste);
+    let overall_taste = determine_overall_taste(&parts);
+    let overall_appeal = determine_overall_appeal(potion_kind, &parts, overall_taste);
 
     Some(Recipe {
         potion_kind: potion_kind.clone(),
@@ -380,4 +439,79 @@ pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
         overall_taste: overall_taste,
         overall_appeal: overall_appeal,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::models::{GetByKey, IngredientKey, PotionKindKey, INGREDIENTS};
+
+    use super::*;
+
+    #[test]
+    fn test_simulate() {
+        let test_cases = vec![
+            // Beast, Fire -> Vitality
+            (
+                vec![IngredientKey::Flyagaric, IngredientKey::Lupine],
+                PotionKindKey::Vitality,
+            ),
+            // (vec![IngredientKey::Flyagaric, IngredientKey::ElvenCrushed], PotionKindKey::Sleep),
+            // (vec![IngredientKey::Flyagaric, IngredientKey::WizardsHat], PotionKindKey::Summoning),
+            (
+                vec![IngredientKey::Flyagaric, IngredientKey::Deathcap],
+                PotionKindKey::Monster,
+            ),
+            // Cat
+            (
+                vec![IngredientKey::Catnip, IngredientKey::Lupine],
+                PotionKindKey::Speed,
+            ),
+            // (vec![IngredientKey::Catnip, IngredientKey::ElvenCrushed], PotionKindKey::Slow),
+            // (vec![IngredientKey::Catnip, IngredientKey::WizardsHat], PotionKindKey::Mana),
+            (
+                vec![IngredientKey::Catnip, IngredientKey::Deathcap],
+                PotionKindKey::Warding,
+            ),
+            // Bone
+            (
+                vec![IngredientKey::Anise, IngredientKey::Lupine],
+                PotionKindKey::Strength,
+            ),
+            // (vec![IngredientKey::Anise, IngredientKey::ElvenCrushed], PotionKindKey::Weakness),
+            // ( vec![IngredientKey::Anise, IngredientKey::Pluteus], PotionKindKey::Necromancy,),
+            (
+                vec![IngredientKey::Anise, IngredientKey::Deathcap],
+                PotionKindKey::Skelleton,
+            ),
+            // Soul, Fire -> Speech
+            (
+                vec![IngredientKey::Deadmans, IngredientKey::Lupine],
+                PotionKindKey::Speech,
+            ),
+            (
+                vec![IngredientKey::Deadmans, IngredientKey::Elven],
+                PotionKindKey::Silence,
+            ),
+            // (vec![IngredientKey::Deadmans, IngredientKey::WizardsHat], PotionKindKey::Conjuring),
+            (
+                vec![IngredientKey::Deadmans, IngredientKey::Deathcap],
+                PotionKindKey::Exorcism,
+            ),
+        ];
+
+        for (ingredient_keys, expected_potion) in test_cases {
+            let ingredients: Vec<Ingredient> = ingredient_keys
+                .iter()
+                .map(|&key| INGREDIENTS.get_by_key(&key).clone())
+                .collect();
+
+            dbg!(&ingredient_keys, &expected_potion);
+
+            let result = simulate(&ingredients);
+            assert!(result.is_some());
+
+            let recipe = result.unwrap();
+            assert_eq!(recipe.potion_kind.key, expected_potion);
+        }
+    }
 }
