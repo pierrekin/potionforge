@@ -20,14 +20,27 @@ fn create_ingredient_constraints(
     columns: &[Col],
     recipes: &[Recipe],
     available_ingredients: &IngredientCounts,
+    utilisation: i32,
 ) {
     // No more than the available amount of each ingredient.
+    // For each available ingredient.
     for (ingredient_key, ingredient_count) in available_ingredients.iter() {
+        // Create a constraint for the ingredient.
         let ingredient_row = model.add_row();
-        model.set_row_upper(ingredient_row, *ingredient_count as f64);
+        // Only allow up to the available quantity of the ingredient to be used.
+        let upper_occurrances = ingredient_count * utilisation;
+        model.set_row_upper(ingredient_row, upper_occurrances as f64);
+
+        // For each recipe that might use the ingredient.
         for (column, recipe) in columns.iter().zip(recipes.iter()) {
-            let ingredient = INGREDIENTS.get_by_key(ingredient_key);
-            if recipe.ingredients.contains(ingredient) {
+            // If the recipe uses the ingredient
+            if recipe
+                .ingredients
+                .iter()
+                .map(|ingredient| ingredient.key)
+                .contains(ingredient_key)
+            {
+                // Add a coefficient indicating the reipe uses the ingredient.
                 model.set_weight(ingredient_row, *column, 1.);
             }
         }
@@ -49,27 +62,36 @@ fn create_potion_kind_constraints(model: &mut Model, columns: &[Col], recipes: &
 }
 
 fn create_department_constraints(model: &mut Model, columns: &[Col], recipes: &[Recipe]) {
-    // No more than 5 Health recipes.
+    // Constaints for the health department.
     let health_row = model.add_row();
+    // No more than 5 health recipes.
     model.set_row_upper(health_row, 5.);
+    // No fewer than specified health recipes.
+    // model.set_row_lower(health_row, 1.);
     for (column, recipe) in columns.iter().zip(recipes.iter()) {
         if recipe.potion_kind.department == Department::Health {
             model.set_weight(health_row, *column, 1.);
         }
     }
 
-    // No more than 5 Sourcery recipes.
+    // Constaints for the sourcery department.
     let sourcery_row = model.add_row();
+    // No more than 5 sourcery recipes.
     model.set_row_upper(sourcery_row, 5.);
+    // No fewer than specified sourcery recipes.
+    model.set_row_lower(sourcery_row, 1.);
     for (column, recipe) in columns.iter().zip(recipes.iter()) {
         if recipe.potion_kind.department == Department::Sourcery {
             model.set_weight(sourcery_row, *column, 1.);
         }
     }
 
-    // No more than 5 Provisions recipes.
+    // Constaints for the provisions department.
     let provisions_row = model.add_row();
+    // No more than 5 provisions recipes.
     model.set_row_upper(provisions_row, 5.);
+    // No fewer than specified provisions recipes.
+    model.set_row_lower(provisions_row, 1.);
     for (column, recipe) in columns.iter().zip(recipes.iter()) {
         if recipe.potion_kind.department == Department::Provisions {
             model.set_weight(provisions_row, *column, 1.);
@@ -80,7 +102,10 @@ fn create_department_constraints(model: &mut Model, columns: &[Col], recipes: &[
 fn maximise_recipes(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
+    utilisation: i32,
 ) -> i32 {
+    println!("Maximising recipes.");
+
     // Create the problem.
     let mut model = Model::default();
     model.set_parameter("logLevel", "0");
@@ -100,6 +125,7 @@ fn maximise_recipes(
         &columns,
         &possible_recipes,
         &available_ingredients,
+        utilisation,
     );
     create_potion_kind_constraints(&mut model, &columns, &possible_recipes);
     create_department_constraints(&mut model, &columns, &possible_recipes);
@@ -136,7 +162,10 @@ fn maximise_appeal(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
     min_recipes: i32,
+    utilisation: i32,
 ) -> Vec<Recipe> {
+    println!("Maximising appeal.");
+
     // Create the problem.
     let mut model = Model::default();
     model.set_parameter("logLevel", "0");
@@ -156,6 +185,7 @@ fn maximise_appeal(
         &columns,
         &possible_recipes,
         &available_ingredients,
+        utilisation,
     );
     create_potion_kind_constraints(&mut model, &columns, &possible_recipes);
     create_department_constraints(&mut model, &columns, &possible_recipes);
@@ -180,7 +210,13 @@ fn maximise_appeal(
 pub fn recommend(
     possible_recipes: Vec<Recipe>,
     available_ingredients: &IngredientCounts,
+    utilisation: i32,
 ) -> Vec<Recipe> {
-    let num_recipes = maximise_recipes(&possible_recipes, available_ingredients);
-    maximise_appeal(&possible_recipes, available_ingredients, num_recipes)
+    let num_recipes = maximise_recipes(&possible_recipes, available_ingredients, utilisation);
+    maximise_appeal(
+        &possible_recipes,
+        available_ingredients,
+        num_recipes,
+        utilisation,
+    )
 }

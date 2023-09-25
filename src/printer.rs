@@ -7,7 +7,7 @@ use crate::models::{
 };
 use prettytable::{Cell, Row, Table};
 
-pub fn print_recipes_table(recipes: Vec<Recipe>) {
+pub fn print_recipes_table(recipes: &Vec<Recipe>) {
     let mut recipes = recipes.clone();
     recipes.sort_by(|a, b| {
         let dept_cmp = a.potion_kind.department.cmp(&b.potion_kind.department);

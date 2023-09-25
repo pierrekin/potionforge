@@ -1,6 +1,10 @@
+use core::hash::Hash;
+use std::collections::hash_map::DefaultHasher;
 use std::fs::File;
+use std::hash::Hasher;
 use std::io::Read;
 
+use itertools::Itertools;
 use models::IngredientCounts;
 use serde::Deserialize;
 
@@ -14,6 +18,7 @@ mod simulate;
 struct Config {
     arcane_power: i64,
     ingredients: IngredientCounts,
+    utilisation: i32,
 }
 
 fn main() {
@@ -24,7 +29,8 @@ fn main() {
     let config: Config = serde_yaml::from_str(&config_contents).unwrap();
     println!("{:?}", config);
 
-    let available_ingredient_keys: Vec<_> = config.ingredients.keys().collect();
+    let available_ingredient_keys: Vec<_> = config.ingredients.keys().sorted().collect();
+    // let available_ingredient_keys = available_ingredient_keys.reverse();
 
     let possible_recipes = permute::get_all_recipes(
         available_ingredient_keys,
@@ -32,12 +38,13 @@ fn main() {
         config.arcane_power,
     );
 
-    let recommendations = recommend::recommend(possible_recipes, &config.ingredients);
+    let recommendations =
+        recommend::recommend(possible_recipes, &config.ingredients, config.utilisation);
     let total_appeal: i32 = recommendations
         .iter()
         .map(|recipe| recipe.overall_appeal)
         .sum();
 
     println!("Total Appeal: {}", total_appeal);
-    printer::print_recipes_table(recommendations);
+    printer::print_recipes_table(&recommendations);
 }

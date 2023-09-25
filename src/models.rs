@@ -90,7 +90,7 @@ pub enum Department {
     Provisions,
 }
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum IngredientKey {
     Catnip,
     Lupine,
@@ -220,7 +220,7 @@ impl IngredientProcess {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Ingredient {
     pub key: IngredientKey,
     pub process: IngredientProcess,
@@ -354,7 +354,7 @@ impl AppealLookup for AppealMapNegative {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PotionKind {
     pub key: PotionKindKey,
     pub department: Department,
@@ -363,7 +363,7 @@ pub struct PotionKind {
     pub taste_effect: TasteEffect,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Recipe {
     pub potion_kind: PotionKind,
     pub ingredients: Vec<Ingredient>,

@@ -537,8 +537,6 @@ mod tests {
                 .map(|&key| INGREDIENTS.get_by_key(&key).clone())
                 .collect();
 
-            dbg!(&ingredient_keys, &expected_potion);
-
             let result = simulate(&ingredients);
             assert!(result.is_some());
 

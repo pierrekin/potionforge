@@ -1,6 +1,12 @@
+use std::collections::hash_map::DefaultHasher;
+use std::collections::HashSet;
+use std::hash::{Hash, Hasher};
+use std::iter;
+
 use crate::models::{GetByKey, Ingredient, IngredientKey, Recipe, INGREDIENTS};
 use crate::simulate;
 
+use itertools::Itertools;
 use rayon::prelude::*;
 
 pub fn permute_ingredient(
@@ -50,15 +56,27 @@ fn binomial_coefficient(n: i64, k: i64) -> i64 {
 fn generate_combination(ingredients: &[Ingredient], k: i64, index: i64) -> Vec<Ingredient> {
     let n = ingredients.len() as i64;
     let mut combination = Vec::with_capacity(k as usize);
-    let mut elements = ingredients.to_vec();
-
     let mut remaining_index = index;
+    let mut used = vec![false; n as usize];
 
     for i in 0..k {
         let binom = binomial_coefficient(n - i - 1, k - i - 1);
-        let chosen = remaining_index / binom;
-        combination.push(elements.remove(chosen as usize));
+        let mut chosen = remaining_index / binom;
         remaining_index %= binom;
+
+        let mut actual_index = 0;
+        while chosen >= 0 {
+            if !used[actual_index] {
+                if chosen == 0 {
+                    break;
+                }
+                chosen -= 1;
+            }
+            actual_index += 1;
+        }
+
+        used[actual_index] = true;
+        combination.push(ingredients[actual_index].clone());
     }
 
     combination
@@ -91,23 +109,33 @@ pub fn get_all_recipes(
 
     let all_ingredients = permute_ingredients(raw_ingredients.as_slice(), processes);
 
-    (2..r)
+    let mut i = 0;
+
+    let mut debug: HashSet<Vec<Ingredient>> = HashSet::new();
+
+    let result = (2..=r)
         .into_iter()
         .flat_map(|k| {
             let total_combinations = binomial_coefficient(all_ingredients.len() as i64, k);
             (0..total_combinations)
-                .into_par_iter()
+                // .into_par_iter()
+                .into_iter()
                 .filter_map(|index| {
+                    i += 1;
                     let combination = generate_combination(&all_ingredients, k, index as i64);
-                    if validate_combination(&combination) {
-                        Some(simulate::simulate(combination.as_slice()))
-                    } else {
-                        None
+                    debug.insert(combination.clone());
+                    if !validate_combination(&combination) {
+                        return None;
+                    }
+                    match simulate::simulate(combination.as_slice()) {
+                        Some(inner_value) => Some(inner_value),
+                        None => None,
                     }
                 })
-                .flatten()
                 .collect::<Vec<_>>()
                 .into_iter()
         })
-        .collect()
+        .collect();
+
+    result
 }
