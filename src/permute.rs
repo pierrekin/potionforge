@@ -1,12 +1,7 @@
 use crate::models::{GetByKey, Ingredient, IngredientKey, Recipe, INGREDIENTS};
 use crate::simulate;
 
-
 use rayon::prelude::*;
-use std::ops::Range;
-
-
-const SIMULATE_SUBRANGE_SIZE: i64 = 5_000;
 
 pub fn permute_ingredient(
     ingredient: &Ingredient,
@@ -82,19 +77,6 @@ fn validate_combination(combination: &Vec<Ingredient>) -> bool {
     }
 
     true
-}
-
-fn solve_subrange(range: Range<i64>, all_ingredients: &[Ingredient], k: i64) -> Vec<Recipe> {
-    range
-        .filter_map(|index| {
-            let combination = generate_combination(&all_ingredients, k, index as i64);
-            if validate_combination(&combination) {
-                simulate::simulate(&combination.as_slice())
-            } else {
-                None
-            }
-        })
-        .collect()
 }
 
 pub fn get_all_recipes(
