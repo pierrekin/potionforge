@@ -54,6 +54,40 @@ pub fn process_pickle(ingredient: &Ingredient) -> Option<Ingredient> {
 }
 
 pub fn process_ferment(ingredient: &Ingredient) -> Option<Ingredient> {
+    let has_impurity = match &ingredient.parts {
+        IngredientParts::Raw(a, b, c, d)
+        | IngredientParts::Fermented(a, b, c, d)
+        | IngredientParts::Infused(a, b, c, d)
+        | IngredientParts::FermentedInfused(a, b, c, d) => {
+            *a == IngredientPart::Impurity
+                || *b == IngredientPart::Impurity
+                || *c == IngredientPart::Impurity
+                || *d == IngredientPart::Impurity
+        }
+        IngredientParts::Crushed(a, b)
+        | IngredientParts::Blanched(a, b)
+        | IngredientParts::Dried(a, b)
+        | IngredientParts::Pickled(a, b)
+        | IngredientParts::CrushedFermented(a, b)
+        | IngredientParts::BlanchedFermented(a, b)
+        | IngredientParts::DriedFermented(a, b)
+        | IngredientParts::PickledFermented(a, b)
+        | IngredientParts::CrushedInfused(a, b)
+        | IngredientParts::BlanchedInfused(a, b)
+        | IngredientParts::DriedInfused(a, b)
+        | IngredientParts::PickledInfused(a, b)
+        | IngredientParts::CrushedFermentedInfused(a, b)
+        | IngredientParts::BlanchedFermentedInfused(a, b)
+        | IngredientParts::DriedFermentedInfused(a, b)
+        | IngredientParts::PickledFermentedInfused(a, b) => {
+            *a == IngredientPart::Impurity || *b == IngredientPart::Impurity
+        }
+    };
+
+    if !has_impurity {
+        return None;
+    }
+
     let new_parts = match &ingredient.parts {
         IngredientParts::Raw(a, b, c, d) => IngredientParts::Fermented(
             if *a == IngredientPart::Impurity {
@@ -349,18 +383,10 @@ fn determine_overall_purity(parts: &[IngredientPart]) -> OverallPurity {
         }
     }
 
-    if purity >= 2 {
-        OverallPurity::VeryStimulant
-    } else if purity == 1 {
-        OverallPurity::Stimulant
-    } else if purity == 0 {
-        OverallPurity::Neutral
-    } else if purity == -1 {
+    if purity < 0 {
         OverallPurity::Impure
-    } else if purity <= -2 {
-        OverallPurity::VeryImpure
     } else {
-        unreachable!()
+        OverallPurity::Neutral
     }
 }
 
@@ -463,11 +489,8 @@ fn determine_toxicity_appeal(potion_kind: &PotionKind, overall_toxicity: Overall
 
 fn determine_purity_appeal(overall_purity: OverallPurity) -> i32 {
     match overall_purity {
-        OverallPurity::VeryImpure => -20,
         OverallPurity::Impure => -10,
         OverallPurity::Neutral => 0,
-        OverallPurity::Stimulant => 0,
-        OverallPurity::VeryStimulant => 0,
     }
 }
 

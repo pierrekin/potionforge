@@ -46,11 +46,8 @@ pub enum TasteEffect {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum OverallPurity {
-    VeryStimulant,
-    Stimulant,
     Neutral,
     Impure,
-    VeryImpure,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

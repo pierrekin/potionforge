@@ -125,11 +125,8 @@ pub fn print_recipes_table(recipes: &Vec<Recipe>) {
         };
 
         let purity_tag = match recipe.overall_purity {
-            OverallPurity::VeryStimulant => "+VeryStimulant",
-            OverallPurity::Stimulant => "+Stimulant",
             OverallPurity::Neutral => "",
             OverallPurity::Impure => "-Impure",
-            OverallPurity::VeryImpure => "-VeryImpure",
         };
 
         // Normalise the ingredients list.
