@@ -1,22 +1,36 @@
-use crate::models::{GetByKey, Ingredient, IngredientKey, Recipe, INGREDIENTS};
+use crate::models::{GetByKey, Ingredient, IngredientKey, Process, Recipe, INGREDIENTS};
 use crate::simulate;
 
 use rayon::prelude::*;
 
-pub fn permute_ingredient(
-    ingredient: &Ingredient,
-    processes: Option<Vec<&str>>,
-) -> Vec<Ingredient> {
+pub fn permute_ingredient(ingredient: &Ingredient, processes: &Vec<Process>) -> Vec<Ingredient> {
     let mut result = vec![ingredient.clone()];
-    let processes = processes.unwrap_or(vec!["cut"]);
 
-    if processes.contains(&"cut") {
-        if let Some(mut cut_results) = simulate::process_cut(ingredient) {
-            result.append(&mut cut_results);
+    if processes.contains(&Process::Crush) {
+        if let Some(crushed_ingredient) = simulate::process_crush(ingredient) {
+            result.push(crushed_ingredient);
+        };
+    }
+
+    if processes.contains(&Process::Blanch) {
+        if let Some(blanched_ingredient) = simulate::process_blanch(ingredient) {
+            result.push(blanched_ingredient);
         }
     }
 
-    if processes.contains(&"ferment") {
+    if processes.contains(&Process::Dry) {
+        if let Some(dried_ingredient) = simulate::process_dry(ingredient) {
+            result.push(dried_ingredient);
+        }
+    }
+
+    if processes.contains(&Process::Pickle) {
+        if let Some(pickled_ingredient) = simulate::process_pickle(ingredient) {
+            result.push(pickled_ingredient);
+        }
+    }
+
+    if processes.contains(&Process::Ferment) {
         for ingredient in result.clone() {
             if let Some(ferment_result) = simulate::process_ferment(&ingredient) {
                 result.push(ferment_result);
@@ -24,7 +38,7 @@ pub fn permute_ingredient(
         }
     }
 
-    if processes.contains(&"infuse") {
+    if processes.contains(&Process::Infuse) {
         for ingredient in result.clone() {
             if let Some(infuse_result) = simulate::process_infuse(&ingredient) {
                 result.push(infuse_result);
@@ -35,10 +49,13 @@ pub fn permute_ingredient(
     result
 }
 
-pub fn permute_ingredients(ingredients: &[&Ingredient], processes: Vec<&str>) -> Vec<Ingredient> {
+pub fn permute_ingredients(
+    ingredients: &[&Ingredient],
+    processes: &Vec<Process>,
+) -> Vec<Ingredient> {
     ingredients
         .iter()
-        .flat_map(|ing| permute_ingredient(ing, Some(processes.clone())))
+        .flat_map(|ing| permute_ingredient(ing, &processes))
         .collect()
 }
 
@@ -96,8 +113,8 @@ fn validate_combination(combination: &Vec<Ingredient>) -> bool {
 }
 
 pub fn get_all_recipes(
-    raw_ingredients: Vec<&IngredientKey>,
-    processes: Vec<&str>,
+    raw_ingredients: &Vec<&IngredientKey>,
+    processes: &Vec<Process>,
     r: i64,
 ) -> Vec<Recipe> {
     let raw_ingredients: Vec<_> = raw_ingredients

@@ -217,3 +217,13 @@ impl IngredientProcess {
         .to_string()
     }
 }
+
+#[derive(Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Process {
+    Crush,
+    Blanch,
+    Dry,
+    Pickle,
+    Ferment,
+    Infuse,
+}

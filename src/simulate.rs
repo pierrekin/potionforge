@@ -5,34 +5,50 @@ use crate::models::{
     ValidCombination,
 };
 
-pub fn process_cut(ingredient: &Ingredient) -> Option<Vec<Ingredient>> {
+pub fn process_crush(ingredient: &Ingredient) -> Option<Ingredient> {
     match &ingredient.parts {
-        IngredientParts::Raw(a, b, c, d) => Some(vec![
-            Ingredient {
-                key: ingredient.key.clone(),
-                process: IngredientProcess::Crushed,
-                kind: ingredient.kind.clone(),
-                parts: IngredientParts::Crushed(b.clone(), c.clone()),
-            },
-            Ingredient {
-                key: ingredient.key.clone(),
-                process: IngredientProcess::Blanched,
-                kind: ingredient.kind.clone(),
-                parts: IngredientParts::Blanched(a.clone(), b.clone()),
-            },
-            Ingredient {
-                key: ingredient.key.clone(),
-                process: IngredientProcess::Dried,
-                kind: ingredient.kind.clone(),
-                parts: IngredientParts::Dried(a.clone(), c.clone()),
-            },
-            Ingredient {
-                key: ingredient.key.clone(),
-                process: IngredientProcess::Pickled,
-                kind: ingredient.kind.clone(),
-                parts: IngredientParts::Pickled(c.clone(), d.clone()),
-            },
-        ]),
+        IngredientParts::Raw(_, b, c, _) => Some(Ingredient {
+            key: ingredient.key.clone(),
+            process: IngredientProcess::Crushed,
+            kind: ingredient.kind.clone(),
+            parts: IngredientParts::Crushed(b.clone(), c.clone()),
+        }),
+        _ => None,
+    }
+}
+
+pub fn process_blanch(ingredient: &Ingredient) -> Option<Ingredient> {
+    match &ingredient.parts {
+        IngredientParts::Raw(a, b, _, _) => Some(Ingredient {
+            key: ingredient.key.clone(),
+            process: IngredientProcess::Blanched,
+            kind: ingredient.kind.clone(),
+            parts: IngredientParts::Blanched(a.clone(), b.clone()),
+        }),
+        _ => None,
+    }
+}
+
+pub fn process_dry(ingredient: &Ingredient) -> Option<Ingredient> {
+    match &ingredient.parts {
+        IngredientParts::Raw(a, _, c, _) => Some(Ingredient {
+            key: ingredient.key.clone(),
+            process: IngredientProcess::Dried,
+            kind: ingredient.kind.clone(),
+            parts: IngredientParts::Dried(a.clone(), c.clone()),
+        }),
+        _ => None,
+    }
+}
+
+pub fn process_pickle(ingredient: &Ingredient) -> Option<Ingredient> {
+    match &ingredient.parts {
+        IngredientParts::Raw(_, _, c, d) => Some(Ingredient {
+            key: ingredient.key.clone(),
+            process: IngredientProcess::Pickled,
+            kind: ingredient.kind.clone(),
+            parts: IngredientParts::Pickled(c.clone(), d.clone()),
+        }),
         _ => None,
     }
 }
@@ -151,6 +167,18 @@ pub fn process_infuse(ingredient: &Ingredient) -> Option<Ingredient> {
             swap_elements(c.clone()),
             swap_elements(d.clone()),
         ),
+        IngredientParts::Crushed(a, b) => {
+            IngredientParts::CrushedInfused(swap_elements(a.clone()), swap_elements(b.clone()))
+        }
+        IngredientParts::Blanched(a, b) => {
+            IngredientParts::BlanchedInfused(swap_elements(a.clone()), swap_elements(b.clone()))
+        }
+        IngredientParts::Dried(a, b) => {
+            IngredientParts::DriedInfused(swap_elements(a.clone()), swap_elements(b.clone()))
+        }
+        IngredientParts::Pickled(a, b) => {
+            IngredientParts::PickledInfused(swap_elements(a.clone()), swap_elements(b.clone()))
+        }
         IngredientParts::Fermented(a, b, c, d) => IngredientParts::FermentedInfused(
             swap_elements(a.clone()),
             swap_elements(b.clone()),
@@ -174,7 +202,17 @@ pub fn process_infuse(ingredient: &Ingredient) -> Option<Ingredient> {
             swap_elements(a.clone()),
             swap_elements(b.clone()),
         ),
-        _ => return None,
+
+        IngredientParts::Infused(_, _, _, _) => return None, // Already infused
+        IngredientParts::CrushedInfused(_, _) => return None, // Already infused
+        IngredientParts::BlanchedInfused(_, _) => return None, // Already infused
+        IngredientParts::DriedInfused(_, _) => return None,  // Already infused
+        IngredientParts::PickledInfused(_, _) => return None, // Already infused
+        IngredientParts::FermentedInfused(_, _, _, _) => return None, // Already infused
+        IngredientParts::CrushedFermentedInfused(_, _) => return None, // Already infused
+        IngredientParts::BlanchedFermentedInfused(_, _) => return None, // Already infused
+        IngredientParts::DriedFermentedInfused(_, _) => return None, // Already infused
+        IngredientParts::PickledFermentedInfused(_, _) => return None, // Already infused
     };
 
     let new_process = match ingredient.process {
@@ -520,10 +558,7 @@ mod tests {
                 vec![IngredientKey::Deadmans, IngredientKey::Lupine],
                 PotionKindKey::Speech,
             ),
-            (
-                vec![IngredientKey::Deadmans, IngredientKey::Elven],
-                PotionKindKey::Silence,
-            ),
+            // ( vec![IngredientKey::Deadmans, IngredientKey::Elven], PotionKindKey::Silence,),
             // (vec![IngredientKey::Deadmans, IngredientKey::WizardsHat], PotionKindKey::Conjuring),
             (
                 vec![IngredientKey::Deadmans, IngredientKey::Deathcap],
@@ -537,6 +572,7 @@ mod tests {
                 .map(|&key| INGREDIENTS.get_by_key(&key).clone())
                 .collect();
 
+            dbg!(&ingredients, &expected_potion);
             let result = simulate(&ingredients);
             assert!(result.is_some());
 

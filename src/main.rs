@@ -1,11 +1,11 @@
 use std::fs::File;
 use std::io::Read;
 
-use models::IngredientCounts;
+use models::{IngredientCounts, Process};
 use serde::Deserialize;
 
+mod enumerate;
 mod models;
-mod permute;
 mod printer;
 mod recommend;
 mod simulate;
@@ -14,6 +14,7 @@ mod simulate;
 struct Config {
     arcane_power: i64,
     ingredients: IngredientCounts,
+    processes: Vec<Process>,
     utilisation: i32,
 }
 
@@ -31,9 +32,9 @@ fn main() {
     available_ingredient_keys.sort();
 
     println!("Enumerating possible recipes...");
-    let possible_recipes = permute::get_all_recipes(
-        available_ingredient_keys,
-        vec!["cut", "ferment", "infuse"],
+    let possible_recipes = enumerate::get_all_recipes(
+        &available_ingredient_keys,
+        &config.processes,
         config.arcane_power,
     );
 
