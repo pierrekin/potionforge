@@ -433,7 +433,7 @@ checksum = "31114a898e107c51bb1609ffaf55a0e011cf6a4d7f1170d0015a165082c0338b"
 
 [[package]]
 name = "potionforge"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "coin_cbc",
  "console",
@@ -447,7 +447,7 @@ dependencies = [
 
 [[package]]
 name = "potionkeeper"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "potionforge",
