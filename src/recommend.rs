@@ -103,12 +103,13 @@ fn maximise_recipes(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
     utilisation: i32,
+    cbc_loglevel: &str,
 ) -> i32 {
     println!("Maximising recipes.");
 
     // Create the problem.
     let mut model = Model::default();
-    model.set_parameter("logLevel", "1");
+    model.set_parameter("logLevel", &cbc_loglevel);
 
     // Set objective sense.
     model.set_obj_sense(Sense::Maximize);
@@ -163,12 +164,13 @@ fn maximise_appeal(
     available_ingredients: &IngredientCounts,
     min_recipes: i32,
     utilisation: i32,
+    cbc_loglevel: &str,
 ) -> Vec<Recipe> {
     println!("Maximising appeal.");
 
     // Create the problem.
     let mut model = Model::default();
-    model.set_parameter("logLevel", "1");
+    model.set_parameter("logLevel", &cbc_loglevel);
 
     // Set objective sense.
     model.set_obj_sense(Sense::Maximize);
@@ -211,12 +213,19 @@ pub fn recommend(
     possible_recipes: Vec<Recipe>,
     available_ingredients: &IngredientCounts,
     utilisation: i32,
+    cbc_loglevel: String,
 ) -> Vec<Recipe> {
-    let num_recipes = maximise_recipes(&possible_recipes, available_ingredients, utilisation);
+    let num_recipes = maximise_recipes(
+        &possible_recipes,
+        available_ingredients,
+        utilisation,
+        &cbc_loglevel,
+    );
     maximise_appeal(
         &possible_recipes,
         available_ingredients,
         num_recipes,
         utilisation,
+        &cbc_loglevel,
     )
 }
