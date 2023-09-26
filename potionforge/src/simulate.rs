@@ -231,11 +231,7 @@ fn determine_toxicity_potency(potion_kind: &PotionKind, parts: &Vec<IngredientPa
         .map(|part| match part {
             IngredientPart::Toxin => match potion_kind.toxicity_effect {
                 ToxicityEffect::ToxicPositive => 20,
-                ToxicityEffect::ToxicNegative => 0,
-            },
-            IngredientPart::Antitoxin => match potion_kind.toxicity_effect {
-                ToxicityEffect::ToxicPositive => 0,
-                ToxicityEffect::ToxicNegative => 0,
+                ToxicityEffect::ToxicNegative => -20,
             },
             _ => 0,
         })
@@ -292,13 +288,6 @@ pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
     let element_potency = determine_element_potency(&element, &parts);
     let main_effect_potency = determine_main_effect_potency(&main_effect, &parts);
     let overall_potency = purity_potency + toxicity_potency + element_potency + main_effect_potency;
-    dbg!(
-        overall_potency,
-        purity_potency,
-        toxicity_potency,
-        element_potency,
-        main_effect_potency
-    );
 
     Some(Recipe {
         potion_kind_key: potion_kind.key.clone(),
