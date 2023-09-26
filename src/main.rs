@@ -1,15 +1,16 @@
 use std::fs::File;
 use std::io::Read;
 
+extern crate clap;
+use clap::{arg, command, Arg, Command};
+use models::{IngredientCounts, Process};
+use serde::Deserialize;
+
 mod enumerate;
 mod models;
 mod printer;
 mod recommend;
 mod simulate;
-extern crate clap;
-use clap::{arg, command, Arg, Command};
-use models::{IngredientCounts, Process};
-use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 struct Config {
