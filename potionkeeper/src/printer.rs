@@ -3,8 +3,9 @@ extern crate prettytable;
 use std::cmp::Ordering;
 
 use potionforge::models::{
-    traits::{GetName, ToHumanReadable},
+    traits::{GetByKey, GetName, ToHumanReadable},
     Ingredient, OverallPurity, OverallTaste, OverallToxicity, Recipe, TasteEffect, ToxicityEffect,
+    POTION_KINDS,
 };
 use prettytable::{Cell, Row, Table};
 
@@ -96,17 +97,15 @@ fn get_purity_tag(overall_purity: &OverallPurity) -> &'static str {
 
 fn add_recipe_row(table: &mut Table, index: usize, recipe: &Recipe) {
     let ingredients = get_ingredients_string(&recipe.ingredients);
-    let toxicity_tag = get_toxicity_tag(
-        &recipe.potion_kind.toxicity_effect,
-        &recipe.overall_toxicity,
-    );
-    let taste_tag = get_taste_tag(&recipe.potion_kind.taste_effect, &recipe.overall_taste);
+    let potion_kind = POTION_KINDS.get_by_key(&recipe.potion_kind_key);
+    let toxicity_tag = get_toxicity_tag(&potion_kind.toxicity_effect, &recipe.overall_toxicity);
+    let taste_tag = get_taste_tag(&potion_kind.taste_effect, &recipe.overall_taste);
     let purity_tag = get_purity_tag(&recipe.overall_purity);
 
     table.add_row(Row::new(vec![
         Cell::new(&(index + 1).to_string()),
-        Cell::new(&recipe.potion_kind.department.name()),
-        Cell::new(&recipe.potion_kind.name()),
+        Cell::new(&potion_kind.department.name()),
+        Cell::new(&potion_kind.name()),
         Cell::new(&ingredients),
         Cell::new(&purity_tag),
         Cell::new(&toxicity_tag),
@@ -154,11 +153,14 @@ pub fn _print_ingredients_table(ingredients: &Vec<Ingredient>) {
 
 fn sort_recipes(recipes: &mut Vec<Recipe>) {
     recipes.sort_by(|a, b| {
-        let dept_cmp = a.potion_kind.department.cmp(&b.potion_kind.department);
+        let a_potion_kind = POTION_KINDS.get_by_key(&a.potion_kind_key);
+        let b_potion_kind = POTION_KINDS.get_by_key(&b.potion_kind_key);
+
+        let dept_cmp = a_potion_kind.department.cmp(&b_potion_kind.department);
         if dept_cmp == Ordering::Equal {
-            let main_effect_cmp = a.potion_kind.parts.0.cmp(&b.potion_kind.parts.0);
+            let main_effect_cmp = a_potion_kind.parts.0.cmp(&b_potion_kind.parts.0);
             if main_effect_cmp == Ordering::Equal {
-                return a.potion_kind.parts.1.cmp(&b.potion_kind.parts.1);
+                return a_potion_kind.parts.1.cmp(&b_potion_kind.parts.1);
             }
             main_effect_cmp
         } else {

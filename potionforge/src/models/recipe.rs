@@ -178,7 +178,7 @@ impl GetName for PotionKind {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Recipe {
-    pub potion_kind: PotionKind,
+    pub potion_kind_key: PotionKindKey,
     pub ingredients: Vec<Ingredient>,
     pub overall_taste: OverallTaste,
     pub overall_toxicity: OverallToxicity,

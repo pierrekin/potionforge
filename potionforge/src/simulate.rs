@@ -531,7 +531,7 @@ pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
         determine_overall_appeal(potion_kind, overall_purity, overall_taste, overall_toxicity);
 
     Some(Recipe {
-        potion_kind: potion_kind.clone(),
+        potion_kind_key: potion_kind.key.clone(),
         ingredients: ingredients.to_vec(),
         overall_purity: overall_purity,
         overall_taste: overall_taste,
@@ -605,7 +605,7 @@ mod tests {
             assert!(result.is_some());
 
             let recipe = result.unwrap();
-            assert_eq!(recipe.potion_kind.key, expected_potion);
+            assert_eq!(recipe.potion_kind_key, expected_potion);
         }
     }
 }

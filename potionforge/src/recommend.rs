@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use coin_cbc::{raw::Status, Col, Model, Sense};
 use itertools::Itertools;
 
-use crate::models::{Department, IngredientKey, Recipe, POTION_KINDS};
+use crate::models::{traits::GetByKey, Department, IngredientKey, Recipe, POTION_KINDS};
 
 pub type IngredientCounts = HashMap<IngredientKey, i32>;
 
@@ -58,7 +58,7 @@ fn create_potion_kind_constraints(model: &mut Model, columns: &[Col], recipes: &
         model.set_row_upper(potion_kind_row, 1.);
 
         for (column, recipe) in columns.iter().zip(recipes.iter()) {
-            if recipe.potion_kind.key == *potion_kind_key {
+            if recipe.potion_kind_key == *potion_kind_key {
                 model.set_weight(potion_kind_row, *column, 1.);
             }
         }
@@ -66,39 +66,32 @@ fn create_potion_kind_constraints(model: &mut Model, columns: &[Col], recipes: &
 }
 
 fn create_department_constraints(model: &mut Model, columns: &[Col], recipes: &[Recipe]) {
-    // Constaints for the health department.
+    // Constaints for each department.
     let health_row = model.add_row();
-    // No more than 5 health recipes.
-    model.set_row_upper(health_row, 5.);
-    // No fewer than specified health recipes.
-    // model.set_row_lower(health_row, 1.);
-    for (column, recipe) in columns.iter().zip(recipes.iter()) {
-        if recipe.potion_kind.department == Department::Health {
-            model.set_weight(health_row, *column, 1.);
-        }
-    }
-
-    // Constaints for the sourcery department.
     let sourcery_row = model.add_row();
-    // No more than 5 sourcery recipes.
-    model.set_row_upper(sourcery_row, 5.);
-    // No fewer than specified sourcery recipes.
-    model.set_row_lower(sourcery_row, 1.);
-    for (column, recipe) in columns.iter().zip(recipes.iter()) {
-        if recipe.potion_kind.department == Department::Sourcery {
-            model.set_weight(sourcery_row, *column, 1.);
-        }
-    }
-
-    // Constaints for the provisions department.
     let provisions_row = model.add_row();
-    // No more than 5 provisions recipes.
+
+    // No more than specified recipes per department.
+    model.set_row_upper(health_row, 5.);
+    model.set_row_upper(sourcery_row, 5.);
     model.set_row_upper(provisions_row, 5.);
-    // No fewer than specified provisions recipes.
+
+    // No fewer than specified recipes per department.
+    model.set_row_lower(health_row, 1.);
+    model.set_row_lower(sourcery_row, 1.);
     model.set_row_lower(provisions_row, 1.);
+
     for (column, recipe) in columns.iter().zip(recipes.iter()) {
-        if recipe.potion_kind.department == Department::Provisions {
+        let potion_kind = POTION_KINDS.get_by_key(&recipe.potion_kind_key);
+
+        if potion_kind.department == Department::Health {
+            model.set_weight(health_row, *column, 1.);
+        } else if potion_kind.department == Department::Sourcery {
+            model.set_weight(sourcery_row, *column, 1.);
+        } else if potion_kind.department == Department::Provisions {
             model.set_weight(provisions_row, *column, 1.);
+        } else {
+            unreachable!();
         }
     }
 }
