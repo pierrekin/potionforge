@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Read;
 
 extern crate clap;
-use clap::{arg, command, Arg, Command};
+use clap::{arg, command, Command};
 use models::{IngredientCounts, Process};
 use serde::Deserialize;
 
@@ -37,9 +37,11 @@ fn main() {
                 ),
         )
         .subcommand(
-            Command::new("debug")
-                .about("Debug a potion")
-                .arg(Arg::new("config").help("Debug confg file").required(false)),
+            Command::new("debug").about("Debug a potion").arg(
+                arg!(-c --config <PATH> "Config file")
+                    .default_value("config.yml")
+                    .required(false),
+            ),
         )
         .get_matches();
 
@@ -50,11 +52,7 @@ fn main() {
     }
 
     if let Some(matches) = matches.subcommand_matches("debug") {
-        let default_config_file = "debug.yml".to_string();
-        let config_file = matches
-            .get_one::<String>("config-file")
-            .unwrap_or(&default_config_file);
-        println!("Debug using config file: {}", config_file);
+        let config_file = matches.get_one::<String>("config").unwrap();
         debug(config_file.clone());
     }
 }
@@ -97,6 +95,6 @@ fn recommend(config_filename: String, cbc_loglevel: String) {
     printer::print_recipes_table(&recommendations);
 }
 
-fn debug(clone: String) {
-    todo!()
+fn debug(config_filename: String) {
+    println!("Debug using config file: {}", config_filename);
 }
