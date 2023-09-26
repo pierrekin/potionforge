@@ -1,0 +1,20 @@
+raw_ingredients:
+  asporeus: 4
+  catnip: 4
+  deadmans: 4
+  deathcap: 4
+  elven: 4
+  flyagaric: 4
+  lupine: 4
+  mandrake: 4
+  nightshade: 4
+  pluteus: 4
+  sage: 4
+  thyme: 4
+  wizards: 4
+  wormwood: 4
+
+processes:
+  - cut
+
+arcane_power: 5
