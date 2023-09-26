@@ -1,8 +1,0 @@
-{
-    "rust-analyzer.linkedProjects": [
-        "./Cargo.toml"
-    ],
-    "files.watcherExclude": {
-        "**/target": true
-    }
-}
