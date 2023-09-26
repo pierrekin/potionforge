@@ -1,4 +1,5 @@
-use crate::models::{GetByKey, Ingredient, IngredientKey, Process, Recipe, INGREDIENTS};
+use crate::models::traits::GetByKey;
+use crate::models::{Ingredient, IngredientKey, Process, Recipe, INGREDIENTS};
 use crate::simulate;
 
 use rayon::prelude::*;

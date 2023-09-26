@@ -542,7 +542,7 @@ pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::{GetByKey, IngredientKey, PotionKindKey, INGREDIENTS};
+    use crate::models::{traits::GetByKey, IngredientKey, PotionKindKey, INGREDIENTS};
 
     use super::*;
 

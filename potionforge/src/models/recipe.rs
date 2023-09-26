@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
-use super::ingredients::{
-    Element, Ingredient, IngredientKey, IngredientKind, IngredientPart, IngredientParts,
-    IngredientProcess, MainEffect, Sweetness, Taste, Tastiness,
+use super::{
+    ingredients::{Element, Ingredient, MainEffect},
+    traits::{GetByKey, GetName},
 };
 
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
@@ -10,6 +8,16 @@ pub enum Department {
     Health,
     Sourcery,
     Provisions,
+}
+
+impl GetName for Department {
+    fn name(&self) -> &'static str {
+        match self {
+            Department::Health => "Health",
+            Department::Sourcery => "Sourcery",
+            Department::Provisions => "Provisions",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
@@ -31,6 +39,7 @@ pub enum PotionKindKey {
     Summoning,
     Monster,
 }
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum ToxicityEffect {
     ToxicPositive,
@@ -130,7 +139,7 @@ impl AppealLookup for AppealMapNegative {
             OverallTaste::Icky => APPEAL_MAP_NEGATIVE[5].1,
             OverallTaste::Sweet => APPEAL_MAP_NEGATIVE[6].1,
             OverallTaste::Delicious => APPEAL_MAP_NEGATIVE[7].1,
-            OverallTaste::Bland => APPEAL_MAP_NEGATIVE[7].1,
+            OverallTaste::Bland => APPEAL_MAP_NEGATIVE[8].1,
         }
     }
 }
@@ -144,6 +153,29 @@ pub struct PotionKind {
     pub taste_effect: TasteEffect,
 }
 
+impl GetName for PotionKind {
+    fn name(&self) -> &'static str {
+        match self.key {
+            PotionKindKey::Speed => "Speed",
+            PotionKindKey::Slow => "Slow",
+            PotionKindKey::Mana => "Mana",
+            PotionKindKey::Warding => "Warding",
+            PotionKindKey::Strength => "Strength",
+            PotionKindKey::Weakness => "Weakness",
+            PotionKindKey::Necromancy => "Necromancy",
+            PotionKindKey::Skelleton => "Skelleton",
+            PotionKindKey::Speech => "Speech",
+            PotionKindKey::Silence => "Silence",
+            PotionKindKey::Conjuring => "Conjuring",
+            PotionKindKey::Exorcism => "Exorcism",
+            PotionKindKey::Vitality => "Vitality",
+            PotionKindKey::Sleep => "Sleep",
+            PotionKindKey::Summoning => "Summoning",
+            PotionKindKey::Monster => "Monster",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Recipe {
     pub potion_kind: PotionKind,
@@ -152,281 +184,6 @@ pub struct Recipe {
     pub overall_toxicity: OverallToxicity,
     pub overall_purity: OverallPurity,
     pub overall_appeal: i32,
-}
-
-pub type IngredientCounts = HashMap<IngredientKey, i32>;
-
-pub static INGREDIENTS: [(IngredientKey, Ingredient); 16] = [
-    (
-        IngredientKey::Catnip,
-        Ingredient {
-            key: IngredientKey::Catnip,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Herb,
-            parts: IngredientParts::Raw(
-                IngredientPart::Stimulant,
-                IngredientPart::Impurity,
-                IngredientPart::MainEffect(MainEffect::Cat),
-                IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)),
-            ),
-        },
-    ),
-    (
-        IngredientKey::Lupine,
-        Ingredient {
-            key: IngredientKey::Lupine,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Herb,
-            parts: IngredientParts::Raw(
-                IngredientPart::Toxin,
-                IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)),
-                IngredientPart::Element(Element::Fire),
-                IngredientPart::Stimulant,
-            ),
-        },
-    ),
-    (
-        IngredientKey::Mandrake,
-        Ingredient {
-            key: IngredientKey::Mandrake,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Herb,
-            parts: IngredientParts::Raw(
-                IngredientPart::Taste(Taste::Tastiness(Tastiness::Unsavory)),
-                IngredientPart::Stimulant,
-                IngredientPart::Taste(Taste::Sweetness(Sweetness::Bitter)),
-                IngredientPart::MainEffect(MainEffect::Bone),
-            ),
-        },
-    ),
-    (
-        IngredientKey::Nightshade,
-        Ingredient {
-            key: IngredientKey::Nightshade,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Herb,
-            parts: IngredientParts::Raw(
-                IngredientPart::Toxin,
-                IngredientPart::Element(Element::Aether),
-                IngredientPart::Stimulant,
-                IngredientPart::Element(Element::Water),
-            ),
-        },
-    ),
-    (
-        IngredientKey::Sage,
-        Ingredient {
-            key: IngredientKey::Sage,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Herb,
-            parts: IngredientParts::Raw(
-                IngredientPart::Element(Element::Water),
-                IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)),
-                IngredientPart::Impurity,
-                IngredientPart::Taste(Taste::Sweetness(Sweetness::Sweet)),
-            ),
-        },
-    ),
-    (
-        IngredientKey::Thyme,
-        Ingredient {
-            key: IngredientKey::Thyme,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Herb,
-            parts: IngredientParts::Raw(
-                IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)),
-                IngredientPart::Stimulant,
-                IngredientPart::Impurity,
-                IngredientPart::MainEffect(MainEffect::Cat),
-            ),
-        },
-    ),
-    (
-        IngredientKey::Wormwood,
-        Ingredient {
-            key: IngredientKey::Wormwood,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Herb,
-            parts: IngredientParts::Raw(
-                IngredientPart::Element(Element::Fire),
-                IngredientPart::Antitoxin,
-                IngredientPart::Taste(Taste::Sweetness(Sweetness::Bitter)),
-                IngredientPart::Element(Element::Earth),
-            ),
-        },
-    ),
-    (
-        IngredientKey::Anise,
-        Ingredient {
-            key: IngredientKey::Anise,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Herb,
-            parts: IngredientParts::Raw(
-                IngredientPart::MainEffect(MainEffect::Bone),
-                IngredientPart::Antitoxin,
-                IngredientPart::Taste(Taste::Sweetness(Sweetness::Sweet)),
-                IngredientPart::Impurity,
-            ),
-        },
-    ),
-    (
-        IngredientKey::Deadmans,
-        Ingredient {
-            key: IngredientKey::Deadmans,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Mushroom,
-            parts: IngredientParts::Raw(
-                IngredientPart::Stimulant,
-                IngredientPart::MainEffect(MainEffect::Soul),
-                IngredientPart::Toxin,
-                IngredientPart::Taste(Taste::Sweetness(Sweetness::Bitter)),
-            ),
-        },
-    ),
-    (
-        IngredientKey::Deathcap,
-        Ingredient {
-            key: IngredientKey::Deathcap,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Mushroom,
-            parts: IngredientParts::Raw(
-                IngredientPart::Impurity,
-                IngredientPart::Stimulant,
-                IngredientPart::Toxin,
-                IngredientPart::Element(Element::Earth),
-            ),
-        },
-    ),
-    (
-        IngredientKey::Elven,
-        Ingredient {
-            key: IngredientKey::Elven,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Mushroom,
-            parts: IngredientParts::Raw(
-                IngredientPart::Element(Element::Earth),
-                IngredientPart::Stimulant,
-                IngredientPart::Element(Element::Water),
-                IngredientPart::Antitoxin,
-            ),
-        },
-    ),
-    (
-        IngredientKey::Flyagaric,
-        Ingredient {
-            key: IngredientKey::Flyagaric,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Mushroom,
-            parts: IngredientParts::Raw(
-                IngredientPart::Stimulant,
-                IngredientPart::Toxin,
-                IngredientPart::MainEffect(MainEffect::Beast),
-                IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)),
-            ),
-        },
-    ),
-    (
-        IngredientKey::Pluteus,
-        Ingredient {
-            key: IngredientKey::Pluteus,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Mushroom,
-            parts: IngredientParts::Raw(
-                IngredientPart::Toxin,
-                IngredientPart::Element(Element::Fire),
-                IngredientPart::Stimulant,
-                IngredientPart::Element(Element::Aether),
-            ),
-        },
-    ),
-    (
-        IngredientKey::Wizards,
-        Ingredient {
-            key: IngredientKey::Wizards,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Mushroom,
-            parts: IngredientParts::Raw(
-                IngredientPart::Impurity,
-                IngredientPart::Element(Element::Aether),
-                IngredientPart::Taste(Taste::Tastiness(Tastiness::Unsavory)),
-                IngredientPart::Stimulant,
-            ),
-        },
-    ),
-    (
-        IngredientKey::Asporeus,
-        Ingredient {
-            key: IngredientKey::Asporeus,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Mushroom,
-            parts: IngredientParts::Raw(
-                IngredientPart::MainEffect(MainEffect::Beast),
-                IngredientPart::Taste(Taste::Tastiness(Tastiness::Unsavory)),
-                IngredientPart::Stimulant,
-                IngredientPart::Impurity,
-            ),
-        },
-    ),
-    (
-        IngredientKey::Stinkhorn,
-        Ingredient {
-            key: IngredientKey::Stinkhorn,
-            process: IngredientProcess::Raw,
-            kind: IngredientKind::Mushroom,
-            parts: IngredientParts::Raw(
-                IngredientPart::Taste(Taste::Tastiness(Tastiness::Unsavory)),
-                IngredientPart::MainEffect(MainEffect::Soul),
-                IngredientPart::Taste(Taste::Sweetness(Sweetness::Sweet)),
-                IngredientPart::Stimulant,
-            ),
-        },
-    ),
-];
-
-pub static _INGREDIENTS_VALUES: [&Ingredient; 16] = [
-    &INGREDIENTS[0].1,
-    &INGREDIENTS[1].1,
-    &INGREDIENTS[2].1,
-    &INGREDIENTS[3].1,
-    &INGREDIENTS[4].1,
-    &INGREDIENTS[5].1,
-    &INGREDIENTS[6].1,
-    &INGREDIENTS[7].1,
-    &INGREDIENTS[8].1,
-    &INGREDIENTS[9].1,
-    &INGREDIENTS[10].1,
-    &INGREDIENTS[11].1,
-    &INGREDIENTS[12].1,
-    &INGREDIENTS[13].1,
-    &INGREDIENTS[14].1,
-    &INGREDIENTS[15].1,
-];
-
-pub trait GetName {
-    fn name(&self) -> &'static str;
-}
-
-impl GetName for Ingredient {
-    fn name(&self) -> &'static str {
-        match self.key {
-            IngredientKey::Catnip => "Catnip",
-            IngredientKey::Lupine => "Lupine",
-            IngredientKey::Mandrake => "Mandrake",
-            IngredientKey::Nightshade => "Nightshade",
-            IngredientKey::Sage => "Sage",
-            IngredientKey::Thyme => "Thyme",
-            IngredientKey::Wormwood => "Wormwood",
-            IngredientKey::Anise => "Anise",
-            IngredientKey::Deadmans => "Dead Man's Finger",
-            IngredientKey::Deathcap => "Death Cap",
-            IngredientKey::Elven => "Elven Saddle",
-            IngredientKey::Flyagaric => "Fly Agaric",
-            IngredientKey::Pluteus => "Pluteus",
-            IngredientKey::Wizards => "Wizard's Hat",
-            IngredientKey::Asporeus => "Asporeus",
-            IngredientKey::Stinkhorn => "Stinkhorn",
-        }
-    }
 }
 
 pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
@@ -629,33 +386,6 @@ impl ValidCombination {
     }
 }
 
-pub trait GetByKey<K, V> {
-    fn get_by_key(&self, key: &K) -> &V;
-}
-
-impl GetByKey<IngredientKey, Ingredient> for [(IngredientKey, Ingredient); 16] {
-    fn get_by_key(&self, key: &IngredientKey) -> &Ingredient {
-        match key {
-            IngredientKey::Catnip => &self[0].1,
-            IngredientKey::Lupine => &self[1].1,
-            IngredientKey::Mandrake => &self[2].1,
-            IngredientKey::Nightshade => &self[3].1,
-            IngredientKey::Sage => &self[4].1,
-            IngredientKey::Thyme => &self[5].1,
-            IngredientKey::Wormwood => &self[6].1,
-            IngredientKey::Anise => &self[7].1,
-            IngredientKey::Deadmans => &self[8].1,
-            IngredientKey::Deathcap => &self[9].1,
-            IngredientKey::Elven => &self[10].1,
-            IngredientKey::Flyagaric => &self[11].1,
-            IngredientKey::Pluteus => &self[12].1,
-            IngredientKey::Wizards => &self[13].1,
-            IngredientKey::Asporeus => &self[14].1,
-            IngredientKey::Stinkhorn => &self[15].1,
-        }
-    }
-}
-
 impl GetByKey<PotionKindKey, PotionKind> for [(PotionKindKey, PotionKind); 16] {
     fn get_by_key(&self, key: &PotionKindKey) -> &PotionKind {
         match key {
@@ -685,6 +415,24 @@ impl GetByKey<Department, &'static str> for [(Department, &'static str); 3] {
             Department::Health => &&self[0].1,
             Department::Sourcery => &&self[1].1,
             Department::Provisions => &&self[2].1,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::models::traits::GetByKey;
+
+    use super::POTION_KINDS;
+
+    #[test]
+    fn test_get_potion_kind_by_key() {
+        let potion_kinds = &POTION_KINDS;
+        for i in 0..16 {
+            let key = &potion_kinds[i].0;
+            let expected = &potion_kinds[i].1;
+
+            assert_eq!(potion_kinds.get_by_key(key), expected);
         }
     }
 }
