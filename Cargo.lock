@@ -435,7 +435,14 @@ checksum = "31114a898e107c51bb1609ffaf55a0e011cf6a4d7f1170d0015a165082c0338b"
 name = "potionforge"
 version = "0.1.0"
 dependencies = [
+ "coin_cbc",
+ "console",
+ "indicatif",
+ "itertools",
  "pyo3",
+ "rayon",
+ "serde",
+ "serde_yaml",
 ]
 
 [[package]]
@@ -443,12 +450,8 @@ name = "potionkeeper"
 version = "0.1.0"
 dependencies = [
  "clap",
- "coin_cbc",
- "console",
- "indicatif",
- "itertools",
+ "potionforge",
  "prettytable-rs",
- "rayon",
  "serde",
  "serde_yaml",
 ]

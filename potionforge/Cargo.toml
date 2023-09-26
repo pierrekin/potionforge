@@ -10,7 +10,18 @@ edition = "2021"
 name = "potionforge"
 
 # "cdylib" is necessary to produce a shared library for Python to import from.
-crate-type = ["cdylib"]
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+itertools = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"
+rayon = "1.5.1"
+indicatif = "0.17.6"
+console = { version = "0.15", default-features = false, features = [
+    "ansi-parsing",
+] }
+coin_cbc = "0.1.8"
 
 [dependencies.pyo3]
 version = "0.19.2"

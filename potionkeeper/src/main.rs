@@ -2,15 +2,16 @@ use std::fs::File;
 use std::io::Read;
 
 extern crate clap;
+extern crate potionforge;
+
+mod printer;
+
 use clap::{arg, command, Command};
-use models::{IngredientCounts, Process};
 use serde::Deserialize;
 
-mod enumerate;
-mod models;
-mod printer;
-mod recommend;
-mod simulate;
+use potionforge::enumerate;
+use potionforge::models::{IngredientCounts, Process};
+use potionforge::recommend;
 
 #[derive(Debug, Deserialize)]
 struct Config {

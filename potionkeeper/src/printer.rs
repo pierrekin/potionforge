@@ -2,7 +2,7 @@ extern crate prettytable;
 
 use std::cmp::Ordering;
 
-use crate::models::{
+use potionforge::models::{
     Department, Ingredient, OverallPurity, OverallTaste, OverallToxicity, Recipe, TasteEffect,
     ToxicityEffect,
 };
