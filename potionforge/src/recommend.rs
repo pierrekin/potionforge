@@ -160,10 +160,10 @@ fn create_number_constraints(model: &mut Model, columns: &[Col], min_recipes: i3
 fn maximise_appeal(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
-    min_recipes: i32,
     utilisation: i32,
+    min_recipes: i32,
     cbc_loglevel: &str,
-) -> Vec<Recipe> {
+) -> i32 {
     // TODO: Signal progress to the calling process.
     // println!("Maximising appeal.");
 
@@ -200,6 +200,76 @@ fn maximise_appeal(
     assert_eq!(Status::Finished, raw_solution.status());
     assert!(raw_solution.is_proven_optimal());
 
+    solution.raw().obj_value() as i32
+}
+
+fn create_potency_objectives(possible_recipes: &[Recipe]) -> Vec<f64> {
+    possible_recipes
+        .iter()
+        .map(|recipe| recipe.overall_potency as f64)
+        .collect_vec()
+}
+
+fn create_appeal_constraints(
+    model: &mut Model,
+    columns: &[Col],
+    possible_recipes: &[Recipe],
+    min_appeal: i32,
+) {
+    // At least min_appeal overall appeal
+    let appeal_row = model.add_row();
+    model.set_row_lower(appeal_row, min_appeal as f64);
+
+    for (column, recipe) in columns.iter().zip(possible_recipes.iter()) {
+        model.set_weight(appeal_row, *column, recipe.overall_appeal as f64);
+    }
+}
+
+fn maximise_potency(
+    possible_recipes: &[Recipe],
+    available_ingredients: &HashMap<IngredientKey, i32>,
+    utilisation: i32,
+    min_recipes: i32,
+    min_appeal: i32,
+    cbc_loglevel: &str,
+) -> Vec<Recipe> {
+    // TODO: Signal progress to the calling process.
+    // println!("Maximising appeal.");
+
+    // Create the problem.
+    let mut model = Model::default();
+    model.set_parameter("logLevel", &cbc_loglevel);
+
+    // Set objective sense.
+    model.set_obj_sense(Sense::Maximize);
+
+    // Objective function: maximize the combined potency of all recipes
+    let objectives = create_potency_objectives(possible_recipes);
+
+    // The columns: a binary variable for each recipe with coeffecient 1.0.
+    let columns = create_binary_columns(&mut model, possible_recipes.len(), objectives);
+
+    // The rows: constraints.
+    create_ingredient_constraints(
+        &mut model,
+        &columns,
+        &possible_recipes,
+        &available_ingredients,
+        utilisation,
+    );
+    create_potion_kind_constraints(&mut model, &columns, &possible_recipes);
+    create_department_constraints(&mut model, &columns, &possible_recipes);
+    create_number_constraints(&mut model, &columns, min_recipes);
+    create_appeal_constraints(&mut model, &columns, &possible_recipes, min_appeal);
+
+    // Solve the problem. Returns the solution
+    let solution = model.solve();
+    let raw_solution = solution.raw().to_owned();
+
+    // Check the solver finished and solution is proven optimal.
+    assert_eq!(Status::Finished, raw_solution.status());
+    assert!(raw_solution.is_proven_optimal());
+
     columns
         .iter()
         .zip(possible_recipes.iter())
@@ -214,17 +284,25 @@ pub fn recommend(
     utilisation: i32,
     cbc_loglevel: String,
 ) -> Vec<Recipe> {
-    let num_recipes = maximise_recipes(
+    let recipe_count = maximise_recipes(
         &possible_recipes,
         available_ingredients,
         utilisation,
         &cbc_loglevel,
     );
-    maximise_appeal(
+    let appeal = maximise_appeal(
         &possible_recipes,
         available_ingredients,
-        num_recipes,
         utilisation,
+        recipe_count,
+        &cbc_loglevel,
+    );
+    maximise_potency(
+        &possible_recipes,
+        available_ingredients,
+        utilisation,
+        recipe_count,
+        appeal,
         &cbc_loglevel,
     )
 }

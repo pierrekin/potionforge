@@ -6,18 +6,6 @@ mod printer;
 mod recommend;
 
 use clap::{arg, command, Command};
-use serde::Deserialize;
-
-use potionforge::models::Process;
-use potionforge::recommend::IngredientCounts;
-
-#[derive(Debug, Deserialize)]
-struct Config {
-    arcane_power: i64,
-    ingredients: IngredientCounts,
-    processes: Vec<Process>,
-    utilisation: i32,
-}
 
 fn main() {
     let matches = command!()
@@ -38,7 +26,7 @@ fn main() {
         .subcommand(
             Command::new("debug").about("Debug a potion").arg(
                 arg!(-c --config <PATH> "Config file")
-                    .default_value("config.yml")
+                    .default_value("debug.yml")
                     .required(false),
             ),
         )

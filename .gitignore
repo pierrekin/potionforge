@@ -13,8 +13,11 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-# Config files for potions
-config.yml
+# Config file for recommend
+recommend.yml
+
+# Config file for debug
+debug.yml
 
 # VS Code config file
 .vscode

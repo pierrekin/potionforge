@@ -1,8 +1,7 @@
 use crate::models::{
     self, AppealLookup, AppealMapNegative, AppealMapPositive, Element, GetByParts, Ingredient,
-    IngredientPart, IngredientParts, MainEffect, OverallPurity, OverallTaste,
-    OverallToxicity, PotionKind, Recipe, Sweetness, Taste, TasteEffect, Tastiness, ToxicityEffect,
-    ValidCombination,
+    IngredientPart, IngredientParts, MainEffect, OverallPurity, OverallTaste, OverallToxicity,
+    PotionKind, Recipe, Sweetness, Taste, TasteEffect, Tastiness, ToxicityEffect, ValidCombination,
 };
 
 pub fn collect_parts(ingredients: &[Ingredient]) -> Vec<IngredientPart> {
@@ -215,15 +214,35 @@ fn determine_purity_appeal(overall_purity: OverallPurity) -> i32 {
     }
 }
 
-fn determine_overall_appeal(
-    potion_kind: &PotionKind,
-    overall_purity: OverallPurity,
-    overall_taste: OverallTaste,
-    overall_toxicity: OverallToxicity,
-) -> i32 {
-    determine_purity_appeal(overall_purity)
-        + determine_taste_appeal(potion_kind, overall_taste)
-        + determine_toxicity_appeal(potion_kind, overall_toxicity)
+fn determine_purity_potency(parts: &Vec<IngredientPart>) -> i32 {
+    parts
+        .iter()
+        .map(|part| match part {
+            IngredientPart::Stimulant => 50,
+            IngredientPart::Toxin => -50,
+            _ => 0,
+        })
+        .sum()
+}
+
+fn determine_main_effect_potency(main_effect: &MainEffect, parts: &Vec<IngredientPart>) -> i32 {
+    parts
+        .iter()
+        .map(|part| match part {
+            IngredientPart::MainEffect(part_main_effect) if part_main_effect == main_effect => 50,
+            _ => 0,
+        })
+        .sum()
+}
+
+fn determine_element_potency(element: &Element, parts: &Vec<IngredientPart>) -> i32 {
+    parts
+        .iter()
+        .map(|part| match part {
+            IngredientPart::Element(part_element) if part_element == element => 50,
+            _ => 0,
+        })
+        .sum()
 }
 
 pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
@@ -235,15 +254,26 @@ pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
         return None;
     }
 
+    let element = element.unwrap();
+    let main_effect = main_effect.unwrap();
+
     // Safe to unwrap due to check above.
-    let valid_combination = ValidCombination::new(main_effect.unwrap(), element.unwrap()).unwrap();
+    let valid_combination = ValidCombination::new(main_effect, element).unwrap();
     let potion_kind = models::POTION_KINDS.get_by_parts(valid_combination);
 
     let overall_purity = determine_overall_purity(&parts);
     let overall_taste = determine_overall_taste(&parts);
     let overall_toxicity = determine_overall_toxicity(&parts);
-    let overall_appeal =
-        determine_overall_appeal(potion_kind, overall_purity, overall_taste, overall_toxicity);
+
+    let purity_appeal = determine_purity_appeal(overall_purity);
+    let taste_appeal = determine_taste_appeal(potion_kind, overall_taste);
+    let toxicity_appeal = determine_toxicity_appeal(potion_kind, overall_toxicity);
+    let overall_appeal = purity_appeal + taste_appeal + toxicity_appeal;
+
+    let purity_potency = determine_purity_potency(&parts);
+    let element_potency = determine_element_potency(&element, &parts);
+    let main_effect_potency = determine_main_effect_potency(&main_effect, &parts);
+    let overall_potency = purity_potency + element_potency + main_effect_potency;
 
     Some(Recipe {
         potion_kind_key: potion_kind.key.clone(),
@@ -252,6 +282,7 @@ pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
         overall_taste: overall_taste,
         overall_toxicity: overall_toxicity,
         overall_appeal: overall_appeal,
+        overall_potency: overall_potency,
     })
 }
 

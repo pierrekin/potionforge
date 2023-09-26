@@ -1,12 +1,25 @@
 use std::{fs::File, io::Read};
 
-use crate::{printer, Config};
+use crate::printer;
 use potionforge::{enumerate, recommend};
+
+use serde::Deserialize;
+
+use potionforge::models::Process;
+use potionforge::recommend::IngredientCounts;
+
+#[derive(Debug, Deserialize)]
+struct Config {
+    arcane_power: i64,
+    ingredients: IngredientCounts,
+    processes: Vec<Process>,
+    utilisation: i32,
+}
 
 pub fn recommend(config_filename: String, cbc_loglevel: String) {
     println!("Recommend using config file: {}", config_filename);
 
-    let mut config_file = File::open("./config.yml").unwrap();
+    let mut config_file = File::open(config_filename).unwrap();
     let mut config_contents = String::new();
     config_file.read_to_string(&mut config_contents).unwrap();
 
@@ -36,7 +49,12 @@ pub fn recommend(config_filename: String, cbc_loglevel: String) {
         .iter()
         .map(|recipe| recipe.overall_appeal)
         .sum();
+    let total_potency: i32 = recommendations
+        .iter()
+        .map(|recipe| recipe.overall_potency)
+        .sum();
 
     println!("Total Appeal: {}", total_appeal);
+    println!("Total Appeal: {}", total_potency);
     printer::print_recipes_table(&recommendations);
 }

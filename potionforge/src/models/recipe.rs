@@ -123,7 +123,7 @@ impl AppealLookup for AppealMapPositive {
             OverallTaste::Icky => APPEAL_MAP_POSITIVE[5].1,
             OverallTaste::Sweet => APPEAL_MAP_POSITIVE[6].1,
             OverallTaste::Delicious => APPEAL_MAP_POSITIVE[7].1,
-            OverallTaste::Bland => APPEAL_MAP_POSITIVE[7].1,
+            OverallTaste::Bland => APPEAL_MAP_POSITIVE[8].1,
         }
     }
 }
@@ -184,6 +184,7 @@ pub struct Recipe {
     pub overall_toxicity: OverallToxicity,
     pub overall_purity: OverallPurity,
     pub overall_appeal: i32,
+    pub overall_potency: i32,
 }
 
 pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [

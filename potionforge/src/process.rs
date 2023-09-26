@@ -1,7 +1,4 @@
-use crate::models::{
-    Element, Ingredient,
-    IngredientPart, IngredientParts, IngredientProcess,
-};
+use crate::models::{Element, Ingredient, IngredientPart, IngredientParts, IngredientProcess};
 
 pub fn process_crush(ingredient: &Ingredient) -> Option<Ingredient> {
     match &ingredient.parts {

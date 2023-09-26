@@ -111,6 +111,7 @@ fn add_recipe_row(table: &mut Table, index: usize, recipe: &Recipe) {
         Cell::new(&toxicity_tag),
         Cell::new(&taste_tag),
         Cell::new(&recipe.overall_appeal.to_string()),
+        Cell::new(&recipe.overall_potency.to_string()),
     ]));
 }
 
@@ -119,27 +120,6 @@ fn create_table(headers: Vec<&str>) -> Table {
     let mut table = Table::new();
     table.add_row(Row::new(row));
     table
-}
-
-pub fn _print_ingredients_table(ingredients: &Vec<Ingredient>) {
-    let mut table = Table::new();
-    table.add_row(Row::new(vec![
-        Cell::new("Index"),
-        Cell::new("Kind"),
-        Cell::new("Key"),
-        Cell::new("Process"),
-    ]));
-
-    for (i, ingredient) in ingredients.iter().enumerate() {
-        table.add_row(Row::new(vec![
-            Cell::new(&(i + 1).to_string()),
-            Cell::new(&format!("{:?}", ingredient.key)),
-            Cell::new(&format!("{:?}", ingredient.kind)),
-            Cell::new(&format!("{:?}", ingredient.process)),
-        ]));
-    }
-
-    table.printstd();
 }
 
 fn sort_recipes(recipes: &mut Vec<Recipe>) {
@@ -173,6 +153,7 @@ pub fn print_recipes_table(recipes: &[Recipe]) {
         "Toxicity",
         "Taste",
         "Appeal",
+        "Potency",
     ]);
 
     for (i, recipe) in sorted_recipes.iter().enumerate() {
