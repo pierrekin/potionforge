@@ -219,7 +219,24 @@ fn determine_purity_potency(parts: &Vec<IngredientPart>) -> i32 {
         .iter()
         .map(|part| match part {
             IngredientPart::Stimulant => 50,
-            IngredientPart::Toxin => -50,
+            IngredientPart::Impurity => -50,
+            _ => 0,
+        })
+        .sum()
+}
+
+fn determine_toxicity_potency(potion_kind: &PotionKind, parts: &Vec<IngredientPart>) -> i32 {
+    parts
+        .iter()
+        .map(|part| match part {
+            IngredientPart::Toxin => match potion_kind.toxicity_effect {
+                ToxicityEffect::ToxicPositive => 20,
+                ToxicityEffect::ToxicNegative => 0,
+            },
+            IngredientPart::Antitoxin => match potion_kind.toxicity_effect {
+                ToxicityEffect::ToxicPositive => 0,
+                ToxicityEffect::ToxicNegative => 0,
+            },
             _ => 0,
         })
         .sum()
@@ -271,9 +288,17 @@ pub fn simulate(ingredients: &[Ingredient]) -> Option<Recipe> {
     let overall_appeal = purity_appeal + taste_appeal + toxicity_appeal;
 
     let purity_potency = determine_purity_potency(&parts);
+    let toxicity_potency = determine_toxicity_potency(potion_kind, &parts);
     let element_potency = determine_element_potency(&element, &parts);
     let main_effect_potency = determine_main_effect_potency(&main_effect, &parts);
-    let overall_potency = purity_potency + element_potency + main_effect_potency;
+    let overall_potency = purity_potency + toxicity_potency + element_potency + main_effect_potency;
+    dbg!(
+        overall_potency,
+        purity_potency,
+        toxicity_potency,
+        element_potency,
+        main_effect_potency
+    );
 
     Some(Recipe {
         potion_kind_key: potion_kind.key.clone(),
