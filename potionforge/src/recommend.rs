@@ -105,7 +105,8 @@ fn maximise_recipes(
     utilisation: i32,
     cbc_loglevel: &str,
 ) -> i32 {
-    println!("Maximising recipes.");
+    // TODO: Signal progress to the calling process.
+    // println!("Maximising recipes.");
 
     // Create the problem.
     let mut model = Model::default();
@@ -166,7 +167,8 @@ fn maximise_appeal(
     utilisation: i32,
     cbc_loglevel: &str,
 ) -> Vec<Recipe> {
-    println!("Maximising appeal.");
+    // TODO: Signal progress to the calling process.
+    // println!("Maximising appeal.");
 
     // Create the problem.
     let mut model = Model::default();

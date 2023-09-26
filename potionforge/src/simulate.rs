@@ -601,7 +601,6 @@ mod tests {
                 .map(|&key| INGREDIENTS.get_by_key(&key).clone())
                 .collect();
 
-            dbg!(&ingredients, &expected_potion);
             let result = simulate(&ingredients);
             assert!(result.is_some());
 
