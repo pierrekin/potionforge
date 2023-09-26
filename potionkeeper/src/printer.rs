@@ -121,15 +121,6 @@ fn create_table(headers: Vec<&str>) -> Table {
     table
 }
 
-fn add_ingredient_row(table: &mut Table, index: usize, ingredient: &Ingredient) {
-    table.add_row(Row::new(vec![
-        Cell::new(&(index + 1).to_string()),
-        Cell::new(&format!("{:?}", ingredient.key)),
-        Cell::new(&format!("{:?}", ingredient.kind)),
-        Cell::new(&format!("{:?}", ingredient.process)),
-    ]));
-}
-
 pub fn _print_ingredients_table(ingredients: &Vec<Ingredient>) {
     let mut table = Table::new();
     table.add_row(Row::new(vec![
@@ -190,38 +181,9 @@ pub fn print_recipes_table(recipes: &[Recipe]) {
     table.printstd();
 }
 
-pub fn _print_combinations_table(combinations: &Vec<Vec<Ingredient>>) {
-    let mut table = Table::new();
-    table.add_row(Row::new(vec![Cell::new("Index"), Cell::new("Combination")]));
-
-    for (i, combination) in combinations.iter().enumerate() {
-        let ingredients: Vec<String> = combination
-            .iter()
-            .map(|ingredient| format!("{:?} ({:?})", ingredient.key, ingredient.process))
-            .collect();
-
-        table.add_row(Row::new(vec![
-            Cell::new(&(i + 1).to_string()),
-            Cell::new(&ingredients.join(", ")),
-        ]));
-    }
-
-    table.printstd();
-}
-
-pub fn _print_combination(combination: &Vec<Ingredient>) {
-    let ingredients: Vec<String> = combination
-        .iter()
-        .map(|ing| format!("{:?} ({:?})", ing.key, ing.process))
-        .collect();
-
-    println!("{}", &ingredients.join(", "));
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use potionforge::models::{traits::GetByKey, IngredientKey, INGREDIENTS};
 
     #[test]
     fn test_create_table() {
@@ -233,26 +195,6 @@ mod tests {
         assert_eq!(table.get_row(0).unwrap(), &expected_row);
 
         // Check if the table has only one row (the header)
-        assert_eq!(table.len(), 1);
-    }
-
-    #[test]
-    fn test_add_ingredient_row() {
-        let mut table = Table::new();
-        let ingredient = INGREDIENTS.get_by_key(&IngredientKey::Anise);
-        add_ingredient_row(&mut table, 0, &ingredient);
-
-        let expected_row = Row::new(vec![
-            Cell::new("1"),
-            Cell::new("Anise"),
-            Cell::new("Herb"),
-            Cell::new("Raw"),
-        ]);
-
-        // Check if the first row matches the expected row
-        assert_eq!(table.get_row(0).unwrap(), &expected_row);
-
-        // Check if the table has only one row
         assert_eq!(table.len(), 1);
     }
 }
