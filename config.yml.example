@@ -1,4 +1,11 @@
-arcane_power: 4
+arcane_power: 5
+utilisation: 4
+
+processes:
+  - Blanch
+  - Dry
+  - Pickle
+  - Ferment
 
 ingredients:
   Anise: 1
