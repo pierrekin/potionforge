@@ -4,6 +4,7 @@ use crate::process;
 use crate::recommend::{AlchemistAttributes, MarketConditions};
 use crate::simulate;
 
+use itertools::Itertools;
 use rayon::prelude::*;
 
 pub fn process_ingredient(ingredient: &Ingredient, processes: &Vec<Process>) -> Ingredient {
@@ -157,7 +158,7 @@ fn validate_combination(combination: &Vec<Ingredient>) -> bool {
     true
 }
 
-pub fn get_all_recipes(
+pub fn _get_all_recipes(
     raw_ingredients: &Vec<&IngredientKey>,
     processes: &Vec<Process>,
     r: i64,
@@ -194,6 +195,42 @@ pub fn get_all_recipes(
                 })
                 .collect::<Vec<_>>()
                 .into_iter()
+        })
+        .collect()
+}
+
+pub fn get_all_recipes(
+    raw_ingredients: &Vec<&IngredientKey>,
+    processes: &Vec<Process>,
+    r: i64,
+    alchemist_attributes: &AlchemistAttributes,
+    market_conditions: &MarketConditions,
+) -> Vec<Recipe> {
+    let raw_ingredients: Vec<_> = raw_ingredients
+        .iter()
+        .map(|key| INGREDIENTS.get_by_key(key))
+        .collect();
+
+    let all_ingredients = permute_ingredients(raw_ingredients.as_slice(), processes);
+
+    (2..=r)
+        .into_iter()
+        .flat_map(|k| {
+            all_ingredients
+                .iter()
+                .combinations(k as usize)
+                .filter_map(|combination| {
+                    let local_combination = combination.into_iter().cloned().collect();
+                    if !validate_combination(&local_combination) {
+                        return None;
+                    }
+                    let result = simulate::simulate(
+                        local_combination.as_slice(),
+                        alchemist_attributes,
+                        market_conditions,
+                    );
+                    result
+                })
         })
         .collect()
 }
