@@ -14,6 +14,11 @@ pub type IngredientCounts = HashMap<IngredientKey, i32>;
 pub type AlchemistAttributes = HashMap<AlchemistAttribute, i32>;
 pub type MarketConditions = HashMap<PotionKindKey, Vec<MarketCondition>>;
 
+/// Check whether two floats a and b are within epsilon of each other.
+fn nearly_equal(a: f64, b: f64, epsilon: f64) -> bool {
+    (a - b).abs() < epsilon
+}
+
 fn create_binary_columns(model: &mut Model, num_columns: usize, objectives: Vec<f64>) -> Vec<Col> {
     let mut columns = Vec::with_capacity(num_columns);
     for (_, objective) in (0..num_columns).zip(objectives) {
@@ -278,7 +283,7 @@ fn maximise_potency(
     columns
         .iter()
         .zip(possible_recipes.iter())
-        .filter(|(column, _)| solution.col(**column) == 1.0)
+        .filter(|(column, _)| nearly_equal(solution.col(**column), 1., 0e-6))
         .map(|(_, recipe)| recipe.clone())
         .collect()
 }
