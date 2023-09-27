@@ -6,13 +6,14 @@ use coin_cbc::{raw::Status, Col, Model, Sense};
 use itertools::Itertools;
 
 use crate::models::{
-    traits::GetByKey, AlchemistAttribute, Department, IngredientKey, MarketCondition,
-    PotionKindKey, Recipe, POTION_KINDS,
+    traits::GetByKey, AlchemistAttribute, BrandingCategory, Department, IngredientKey,
+    MarketCondition, PotionKindKey, Recipe, POTION_KINDS,
 };
 
 pub type IngredientCounts = HashMap<IngredientKey, i32>;
 pub type AlchemistAttributes = HashMap<AlchemistAttribute, i32>;
 pub type MarketConditions = HashMap<PotionKindKey, Vec<MarketCondition>>;
+pub type BrandingCounts = HashMap<BrandingCategory, i32>;
 
 /// Check whether two floats a and b are within epsilon of each other.
 fn nearly_equal(a: f64, b: f64, epsilon: f64) -> bool {

@@ -6,7 +6,9 @@ use potionforge::{enumerate, recommend};
 use serde::Deserialize;
 
 use potionforge::models::{Process, Recipe};
-use potionforge::recommend::{AlchemistAttributes, IngredientCounts, MarketConditions};
+use potionforge::recommend::{
+    AlchemistAttributes, BrandingCounts, IngredientCounts, MarketConditions,
+};
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -16,6 +18,7 @@ struct Config {
     ingredients: IngredientCounts,
     alchemists: AlchemistAttributes,
     market: MarketConditions,
+    branding: BrandingCounts,
 }
 
 /// Load configuration from the specified file matching the Config struct.
@@ -67,6 +70,7 @@ pub fn recommend(
         config.arcane_power,
         &config.alchemists,
         &config.market,
+        &config.branding,
     );
 
     println!("Recommending optimal recipes...");

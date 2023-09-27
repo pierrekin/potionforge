@@ -3,7 +3,7 @@ use std::{collections::HashMap, fs::File, io::Read};
 use potionforge::{
     enumerate::process_ingredient,
     models::{traits::GetByKey, Ingredient, IngredientKey, Process, Recipe, INGREDIENTS},
-    recommend::{AlchemistAttributes, MarketConditions},
+    recommend::{AlchemistAttributes, BrandingCounts, MarketConditions},
     simulate::simulate,
 };
 use serde::Deserialize;
@@ -40,6 +40,7 @@ pub fn debug(config_filename: String) -> Result<(), Box<dyn std::error::Error>> 
                 ingredients.as_slice(),
                 &AlchemistAttributes::new(),
                 &MarketConditions::new(),
+                &BrandingCounts::new(),
             )
         })
         .collect();

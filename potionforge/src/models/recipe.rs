@@ -368,6 +368,14 @@ pub enum MarketCondition {
     Trendy,
 }
 
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum BrandingCategory {
+    Bulk,
+    Health,
+    Sourcery,
+    Provisions,
+}
+
 pub trait GetByParts {
     fn get_by_parts(&self, valid_combination: ValidCombination) -> &PotionKind;
 }

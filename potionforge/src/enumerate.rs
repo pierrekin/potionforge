@@ -1,7 +1,7 @@
 use crate::models::traits::GetByKey;
 use crate::models::{Ingredient, IngredientKey, IngredientPart, Process, Recipe, INGREDIENTS};
 use crate::process;
-use crate::recommend::{AlchemistAttributes, MarketConditions};
+use crate::recommend::{AlchemistAttributes, BrandingCounts, MarketConditions};
 use crate::simulate::{self, collect_parts};
 
 use itertools::Itertools;
@@ -172,6 +172,7 @@ pub fn _get_all_recipes(
     r: i64,
     alchemist_attributes: &AlchemistAttributes,
     market_conditions: &MarketConditions,
+    branding_counts: &BrandingCounts,
 ) -> Vec<Recipe> {
     let raw_ingredients: Vec<_> = raw_ingredients
         .iter()
@@ -198,6 +199,7 @@ pub fn _get_all_recipes(
                         combination.as_slice(),
                         alchemist_attributes,
                         market_conditions,
+                        branding_counts,
                     );
                     match result {
                         Some(inner_value) => Some(inner_value),
@@ -216,6 +218,7 @@ pub fn get_all_recipes(
     r: i64,
     alchemist_attributes: &AlchemistAttributes,
     market_conditions: &MarketConditions,
+    branding_counts: &BrandingCounts,
 ) -> Vec<Recipe> {
     let raw_ingredients: Vec<_> = raw_ingredients
         .iter()
@@ -242,6 +245,7 @@ pub fn get_all_recipes(
                         local_combination.as_slice(),
                         alchemist_attributes,
                         market_conditions,
+                        branding_counts,
                     );
                     result
                 })
