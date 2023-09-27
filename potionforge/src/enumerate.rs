@@ -238,9 +238,9 @@ pub fn get_all_recipes(
                     if !is_combination_valid(&local_combination) {
                         return None;
                     }
-                    if !is_combination_reasonable(&local_combination) {
-                        return None;
-                    }
+                    // if !is_combination_reasonable(&local_combination) {
+                    //     return None;
+                    // }
                     let result = simulate::simulate(
                         local_combination.as_slice(),
                         alchemist_attributes,

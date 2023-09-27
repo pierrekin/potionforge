@@ -1,0 +1,7 @@
+recipes:
+  - Pluteus: [Crush]
+    Thyme: [Dry]
+  - Pluteus: [Pickle]
+    Thyme: [Dry]
+  - Thyme: [Dry]
+    Sage: [Dry]

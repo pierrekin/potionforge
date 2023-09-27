@@ -50,28 +50,32 @@ pub fn collect_parts(ingredients: &[Ingredient]) -> Vec<IngredientPart> {
 }
 
 pub fn find_dominant_element(parts: &Vec<IngredientPart>) -> Option<Element> {
-    let mut counts = [0; 4];
+    let mut initial_counts = [0; 4];
 
     for part in parts {
         if let IngredientPart::Element(element) = part {
             match element {
-                Element::Fire => counts[0] += 1,
-                Element::Water => counts[1] += 1,
-                Element::Earth => counts[2] += 1,
-                Element::Aether => counts[3] += 1,
+                Element::Fire => initial_counts[0] += 1,
+                Element::Water => initial_counts[1] += 1,
+                Element::Earth => initial_counts[2] += 1,
+                Element::Aether => initial_counts[3] += 1,
             }
         }
     }
 
-    counts[0] -= counts[1];
-    counts[2] -= counts[3];
+    let initial_total: i32 = initial_counts.iter().sum();
 
-    let max_count = *counts.iter().max().unwrap();
-    if counts.iter().filter(|&&x| x == max_count).count() > 1 {
-        return None;
-    }
+    let final_counts = [
+        initial_counts[0] - initial_counts[1],
+        initial_counts[1] - initial_counts[0],
+        initial_counts[2] - initial_counts[3],
+        initial_counts[3] - initial_counts[2],
+    ];
 
-    match counts.iter().position(|&x| x == max_count) {
+    match final_counts
+        .iter()
+        .position(|&count| count > initial_total / 2)
+    {
         Some(0) => Some(Element::Fire),
         Some(1) => Some(Element::Water),
         Some(2) => Some(Element::Earth),

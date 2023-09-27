@@ -1,23 +1,57 @@
-arcane_power: 5
-utilisation: 4
+arcane_power: 2
+utilisation: 5
 
 processes:
   - Blanch
   - Dry
   - Pickle
-  - Ferment
+  - Crush
+  # - Ferment
+  # - Infuse
 
 ingredients:
-  Anise: 1
-  Catnip: 4
-  Deadmans: 3
-  Deathcap: 3
-  Elven: 1
-  Flyagaric: 3
-  Lupine: 4
-  Mandrake: 1
-  Pluteus: 3
-  Stinkhorn: 3
-  Thyme: 4
-  Wizards: 1
-  Wormwood: 1
+  Pluteus: 1
+  Thyme: 1
+  Sage: 1
+
+  # Anise: 1
+  # Catnip: 1
+  # Deadmans: 1
+  # Deathcap: 1
+  # Elven: 1
+  # Flyagaric: 1
+  # Lupine: 1
+  # Mandrake: 1
+  # Stinkhorn: 1
+  # Wizards: 1
+  # Wormwood: 1
+
+alchemists:
+  FungiConnoisseur: 0
+  Herbalist: 0
+  Optimiser: 1
+  Acclaimed: 0
+
+branding:
+  Bulk: 0
+  Health: 0
+  Sourcery: 0
+  Provisions: 0
+
+market:
+  Vitality: [InDemand]
+  Sleep: [InDemand]
+  Summoning: [InDemand]
+  Monster: [InDemand]
+  Speed: [HighDemand]
+  Slow: [InDemand]
+  Mana: [HighDemand]
+  Warding: [InDemand]
+  Strength: [InDemand]
+  Weakness: [InDemand]
+  Necromancy: [InDemand]
+  Skeleton: [InDemand]
+  Speech: [InDemand]
+  Silence: [InDemand]
+  Conjuring: [InDemand]
+  Exorcism: [InDemand]
