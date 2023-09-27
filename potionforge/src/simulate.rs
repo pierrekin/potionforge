@@ -424,7 +424,7 @@ mod tests {
             // ( vec![IngredientKey::Anise, IngredientKey::Pluteus], PotionKindKey::Necromancy,),
             (
                 vec![IngredientKey::Anise, IngredientKey::Deathcap],
-                PotionKindKey::Skelleton,
+                PotionKindKey::Skeleton,
             ),
             // Soul, Fire -> Speech
             (
