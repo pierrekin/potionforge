@@ -105,14 +105,14 @@ fn maximise_recipes(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
     utilisation: i32,
-    cbc_loglevel: &str,
+    solver_loglevel: &str,
 ) -> i32 {
     // TODO: Signal progress to the calling process.
     // println!("Maximising recipes.");
 
     // Create the problem.
     let mut model = Model::default();
-    model.set_parameter("logLevel", &cbc_loglevel);
+    model.set_parameter("logLevel", &solver_loglevel);
 
     // Set objective sense.
     model.set_obj_sense(Sense::Maximize);
@@ -167,14 +167,14 @@ fn maximise_appeal(
     available_ingredients: &IngredientCounts,
     utilisation: i32,
     min_recipes: i32,
-    cbc_loglevel: &str,
+    solver_loglevel: &str,
 ) -> i32 {
     // TODO: Signal progress to the calling process.
     // println!("Maximising appeal.");
 
     // Create the problem.
     let mut model = Model::default();
-    model.set_parameter("logLevel", &cbc_loglevel);
+    model.set_parameter("logLevel", &solver_loglevel);
 
     // Set objective sense.
     model.set_obj_sense(Sense::Maximize);
@@ -236,14 +236,14 @@ fn maximise_potency(
     utilisation: i32,
     min_recipes: i32,
     min_appeal: i32,
-    cbc_loglevel: &str,
+    solver_loglevel: &str,
 ) -> Vec<Recipe> {
     // TODO: Signal progress to the calling process.
     // println!("Maximising appeal.");
 
     // Create the problem.
     let mut model = Model::default();
-    model.set_parameter("logLevel", &cbc_loglevel);
+    model.set_parameter("logLevel", &solver_loglevel);
 
     // Set objective sense.
     model.set_obj_sense(Sense::Maximize);
@@ -287,20 +287,20 @@ pub fn recommend(
     possible_recipes: Vec<Recipe>,
     available_ingredients: &IngredientCounts,
     utilisation: i32,
-    cbc_loglevel: String,
+    solver_loglevel: String,
 ) -> Vec<Recipe> {
     let recipe_count = maximise_recipes(
         &possible_recipes,
         available_ingredients,
         utilisation,
-        &cbc_loglevel,
+        &solver_loglevel,
     );
     let appeal = maximise_appeal(
         &possible_recipes,
         available_ingredients,
         utilisation,
         recipe_count,
-        &cbc_loglevel,
+        &solver_loglevel,
     );
     maximise_potency(
         &possible_recipes,
@@ -308,6 +308,6 @@ pub fn recommend(
         utilisation,
         recipe_count,
         appeal,
-        &cbc_loglevel,
+        &solver_loglevel,
     )
 }

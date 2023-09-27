@@ -15,7 +15,7 @@ struct Config {
     recipes: Vec<HashMap<IngredientKey, Vec<Process>>>,
 }
 
-pub fn debug(config_filename: String) {
+pub fn debug(config_filename: String) -> Result<(), Box<dyn std::error::Error>> {
     println!("Debug using config file: {}", config_filename);
 
     let mut config_file = File::open(config_filename).unwrap();
@@ -45,4 +45,5 @@ pub fn debug(config_filename: String) {
         .collect();
 
     printer::print_recipes_table(&recipes);
+    Ok(())
 }

@@ -1,45 +1,40 @@
-extern crate clap;
-extern crate potionforge;
+use structopt::StructOpt;
 
 mod debug;
 mod printer;
 mod recommend;
 
-use clap::{arg, command, Command};
+#[derive(StructOpt)]
+struct Opt {
+    #[structopt(subcommand)]
+    cmd: Command,
+}
 
-fn main() {
-    let matches = command!()
-        .subcommand(
-            Command::new("recommend")
-                .about("Recommend a potion")
-                .arg(
-                    arg!(-l --"cbc-loglevel" <STRING> "CBC log level")
-                        .default_value("0")
-                        .required(false),
-                )
-                .arg(
-                    arg!(-c --config <PATH> "Config file")
-                        .default_value("recommend.yml")
-                        .required(false),
-                ),
-        )
-        .subcommand(
-            Command::new("debug").about("Debug a potion").arg(
-                arg!(-c --config <PATH> "Config file")
-                    .default_value("debug.yml")
-                    .required(false),
-            ),
-        )
-        .get_matches();
+#[derive(StructOpt)]
+enum Command {
+    Recommend {
+        #[structopt(short, long, default_value = "0")]
+        solver_loglevel: String,
 
-    if let Some(matches) = matches.subcommand_matches("recommend") {
-        let config_file = matches.get_one::<String>("config").unwrap();
-        let cbc_loglevel = matches.get_one::<String>("cbc-loglevel").unwrap();
-        recommend::recommend(config_file.clone(), cbc_loglevel.clone());
+        #[structopt(short, long, default_value = "recommend.yml")]
+        config: String,
+    },
+    Debug {
+        #[structopt(short, long, default_value = "debug.yml")]
+        config: String,
+    },
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let opt = Opt::from_args();
+
+    match opt.cmd {
+        Command::Recommend {
+            config,
+            solver_loglevel,
+        } => recommend::recommend(config, solver_loglevel)?,
+        Command::Debug { config } => debug::debug(config)?,
     }
 
-    if let Some(matches) = matches.subcommand_matches("debug") {
-        let config_file = matches.get_one::<String>("config").unwrap();
-        debug::debug(config_file.clone());
-    }
+    Ok(())
 }
