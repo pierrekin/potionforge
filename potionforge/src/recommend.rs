@@ -283,7 +283,7 @@ fn maximise_potency(
     columns
         .iter()
         .zip(possible_recipes.iter())
-        .filter(|(column, _)| nearly_equal(solution.col(**column), 1., 0e-6))
+        .filter(|(column, _)| nearly_equal(solution.col(**column), 1., 1e-6))
         .map(|(_, recipe)| recipe.clone())
         .collect()
 }
