@@ -366,7 +366,6 @@ pub enum MarketCondition {
     InDemand,
     LowDemand,
     Trendy,
-    Branding,
 }
 
 pub trait GetByParts {

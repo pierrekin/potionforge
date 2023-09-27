@@ -334,7 +334,6 @@ fn determine_market_appeal(potion_kind: &PotionKind, market_conditions: &MarketC
             MarketCondition::InDemand => 15,
             MarketCondition::LowDemand => 10,
             MarketCondition::Trendy => 10,
-            MarketCondition::Branding => 6,
         })
         .sum()
 }
