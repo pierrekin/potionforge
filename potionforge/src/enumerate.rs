@@ -1,8 +1,8 @@
 use crate::models::traits::GetByKey;
-use crate::models::{Ingredient, IngredientKey, Process, Recipe, INGREDIENTS};
+use crate::models::{Ingredient, IngredientKey, IngredientPart, Process, Recipe, INGREDIENTS};
 use crate::process;
 use crate::recommend::{AlchemistAttributes, MarketConditions};
-use crate::simulate;
+use crate::simulate::{self, collect_parts};
 
 use itertools::Itertools;
 use rayon::prelude::*;
@@ -143,10 +143,12 @@ fn generate_combination(ingredients: &[Ingredient], k: i64, index: i64) -> Vec<I
     combination
 }
 
-fn validate_combination(combination: &Vec<Ingredient>) -> bool {
-    // TODO: This shouldn't be hard coded here.
+/// Validate a combination of ingredienst is a possible recipe.
+fn is_combination_valid(combination: &Vec<Ingredient>) -> bool {
+    // TODO: This count shouldn't be hard coded here.
     let mut keys = [false; 16];
 
+    // If any single ingredient appears more than once
     for ingredient in combination {
         let index = ingredient.key as usize;
         if keys[index] {
@@ -156,6 +158,12 @@ fn validate_combination(combination: &Vec<Ingredient>) -> bool {
     }
 
     true
+}
+
+fn is_combination_reasonable(combination: &Vec<Ingredient>) -> bool {
+    // If any ingredient contains an impurity.
+    let parts = collect_parts(&combination);
+    return !parts.contains(&IngredientPart::Impurity);
 }
 
 pub fn _get_all_recipes(
@@ -180,7 +188,10 @@ pub fn _get_all_recipes(
                 .into_par_iter()
                 .filter_map(|index| {
                     let combination = generate_combination(&all_ingredients, k, index as i64);
-                    if !validate_combination(&combination) {
+                    if !is_combination_valid(&combination) {
+                        return None;
+                    }
+                    if !is_combination_reasonable(&combination) {
                         return None;
                     }
                     let result = simulate::simulate(
@@ -221,7 +232,10 @@ pub fn get_all_recipes(
                 .combinations(k as usize)
                 .filter_map(|combination| {
                     let local_combination = combination.into_iter().cloned().collect();
-                    if !validate_combination(&local_combination) {
+                    if !is_combination_valid(&local_combination) {
+                        return None;
+                    }
+                    if !is_combination_reasonable(&local_combination) {
                         return None;
                     }
                     let result = simulate::simulate(
