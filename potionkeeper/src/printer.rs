@@ -90,7 +90,7 @@ fn get_taste_tag(taste_effect: &TasteEffect, overall_taste: &OverallTaste) -> St
 
 fn get_purity_tag(overall_purity: &OverallPurity) -> &'static str {
     match overall_purity {
-        OverallPurity::Neutral => "",
+        OverallPurity::Neutral => "Pure",
         OverallPurity::Impure => "-Impure",
     }
 }
