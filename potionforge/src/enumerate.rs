@@ -1,6 +1,7 @@
 use crate::models::traits::GetByKey;
-use crate::models::{Ingredient, IngredientKey, Process, Recipe, INGREDIENTS};
+use crate::models::{Ingredient, IngredientKey, MarketCondition, Process, Recipe, INGREDIENTS};
 use crate::process;
+use crate::recommend::{AlchemistAttributes, MarketConditions};
 use crate::simulate;
 
 use rayon::prelude::*;
@@ -160,6 +161,8 @@ pub fn get_all_recipes(
     raw_ingredients: &Vec<&IngredientKey>,
     processes: &Vec<Process>,
     r: i64,
+    alchemist_attributes: &AlchemistAttributes,
+    market_conditions: &MarketConditions,
 ) -> Vec<Recipe> {
     let raw_ingredients: Vec<_> = raw_ingredients
         .iter()
@@ -179,7 +182,12 @@ pub fn get_all_recipes(
                     if !validate_combination(&combination) {
                         return None;
                     }
-                    match simulate::simulate(combination.as_slice()) {
+                    let result = simulate::simulate(
+                        combination.as_slice(),
+                        alchemist_attributes,
+                        market_conditions,
+                    );
+                    match result {
                         Some(inner_value) => Some(inner_value),
                         None => None,
                     }

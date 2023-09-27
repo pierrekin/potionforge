@@ -6,14 +6,16 @@ use potionforge::{enumerate, recommend};
 use serde::Deserialize;
 
 use potionforge::models::Process;
-use potionforge::recommend::IngredientCounts;
+use potionforge::recommend::{AlchemistAttributes, IngredientCounts, MarketConditions};
 
 #[derive(Debug, Deserialize)]
 struct Config {
     arcane_power: i64,
-    ingredients: IngredientCounts,
-    processes: Vec<Process>,
     utilisation: i32,
+    processes: Vec<Process>,
+    ingredients: IngredientCounts,
+    alchemists: AlchemistAttributes,
+    market: MarketConditions,
 }
 
 pub fn recommend(config_filename: String, cbc_loglevel: String) {
@@ -24,7 +26,6 @@ pub fn recommend(config_filename: String, cbc_loglevel: String) {
     config_file.read_to_string(&mut config_contents).unwrap();
 
     let config: Config = serde_yaml::from_str(&config_contents).unwrap();
-    println!("{:?}", config);
 
     let mut available_ingredient_keys: Vec<_> = config.ingredients.keys().collect();
 
@@ -36,6 +37,8 @@ pub fn recommend(config_filename: String, cbc_loglevel: String) {
         &available_ingredient_keys,
         &config.processes,
         config.arcane_power,
+        &config.alchemists,
+        &config.market,
     );
 
     println!("Recommending optimal recipes...");

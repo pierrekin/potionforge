@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 use super::{
     ingredients::{Element, Ingredient, MainEffect},
     traits::{GetByKey, GetName},
@@ -20,7 +22,7 @@ impl GetName for Department {
     }
 }
 
-#[derive(Debug, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
+#[derive(Deserialize, Debug, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum PotionKindKey {
     Speed,
     Slow,
@@ -314,7 +316,7 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Vitality,
             department: Department::Health,
             parts: (MainEffect::Beast, Element::Fire),
-            toxicity_effect: ToxicityEffect::ToxicPositive,
+            toxicity_effect: ToxicityEffect::ToxicNegative,
             taste_effect: TasteEffect::TastyPositive,
         },
     ),
@@ -349,6 +351,23 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
         },
     ),
 ];
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum AlchemistAttribute {
+    Acclaimed,
+    FungiConnoisseur,
+    Herbalist,
+    Optimiser,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum MarketCondition {
+    HighDemand,
+    InDemand,
+    LowDemand,
+    Trendy,
+    Branding,
+}
 
 pub trait GetByParts {
     fn get_by_parts(&self, valid_combination: ValidCombination) -> &PotionKind;

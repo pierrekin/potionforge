@@ -5,9 +5,14 @@ use std::collections::HashMap;
 use coin_cbc::{raw::Status, Col, Model, Sense};
 use itertools::Itertools;
 
-use crate::models::{traits::GetByKey, Department, IngredientKey, Recipe, POTION_KINDS};
+use crate::models::{
+    traits::GetByKey, AlchemistAttribute, Department, IngredientKey, MarketCondition, PotionKind,
+    PotionKindKey, Recipe, POTION_KINDS,
+};
 
 pub type IngredientCounts = HashMap<IngredientKey, i32>;
+pub type AlchemistAttributes = HashMap<AlchemistAttribute, i32>;
+pub type MarketConditions = HashMap<PotionKindKey, Vec<MarketCondition>>;
 
 fn create_binary_columns(model: &mut Model, num_columns: usize, objectives: Vec<f64>) -> Vec<Col> {
     let mut columns = Vec::with_capacity(num_columns);

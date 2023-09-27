@@ -3,6 +3,7 @@ use std::{collections::HashMap, fs::File, io::Read};
 use potionforge::{
     enumerate::process_ingredient,
     models::{traits::GetByKey, Ingredient, IngredientKey, Process, Recipe, INGREDIENTS},
+    recommend::{AlchemistAttributes, MarketConditions},
     simulate::simulate,
 };
 use serde::Deserialize;
@@ -35,7 +36,11 @@ pub fn debug(config_filename: String) {
                     process_ingredient(raw_ingredient, ingredient_process)
                 })
                 .collect();
-            simulate(ingredients.as_slice())
+            simulate(
+                ingredients.as_slice(),
+                &AlchemistAttributes::new(),
+                &MarketConditions::new(),
+            )
         })
         .collect();
 

@@ -110,8 +110,8 @@ fn add_recipe_row(table: &mut Table, index: usize, recipe: &Recipe) {
         Cell::new(&purity_tag),
         Cell::new(&toxicity_tag),
         Cell::new(&taste_tag),
-        Cell::new(&recipe.overall_appeal.to_string()),
-        Cell::new(&recipe.overall_potency.to_string()),
+        Cell::new(format!("{}%", recipe.overall_appeal).as_str()),
+        Cell::new(format!("{:.1}", recipe.overall_potency as f64 / 100.).as_str()),
     ]));
 }
 
