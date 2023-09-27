@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-
-use pyo3::marker;
-
 use crate::{
     models::{
         self,
@@ -360,7 +356,6 @@ fn determine_alchemist_potency(
         match ingredient.kind {
             IngredientKind::Herb => herb_count += 1,
             IngredientKind::Mushroom => mushroom_count += 1,
-            _ => {}
         }
     }
 
@@ -386,32 +381,10 @@ fn determine_alchemist_potency(
         + (mushroom_count.signum() * fungi_connoisseur_count * 10)
 }
 
-fn determine_herbalist_potency(count: i32, ingredients: &[Ingredient]) -> i32 {
-    let base: i32 = ingredients
-        .iter()
-        .map(|ingredient| match ingredient.kind {
-            IngredientKind::Herb => 10,
-            _ => 0,
-        })
-        .sum();
-    count * base
-}
-
-fn determine_fungi_connoisseur_potency(count: i32, ingredients: &[Ingredient]) -> i32 {
-    let base: i32 = ingredients
-        .iter()
-        .map(|ingredient| match ingredient.kind {
-            IngredientKind::Mushroom => 10,
-            _ => 0,
-        })
-        .sum();
-    count * base
-}
-
 #[cfg(test)]
 mod tests {
     use crate::{
-        models::{traits::GetByKey, IngredientKey, MarketCondition, PotionKindKey, INGREDIENTS},
+        models::{traits::GetByKey, IngredientKey, PotionKindKey, INGREDIENTS},
         recommend::{AlchemistAttributes, MarketConditions},
     };
 

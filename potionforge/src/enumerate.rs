@@ -1,5 +1,5 @@
 use crate::models::traits::GetByKey;
-use crate::models::{Ingredient, IngredientKey, MarketCondition, Process, Recipe, INGREDIENTS};
+use crate::models::{Ingredient, IngredientKey, Process, Recipe, INGREDIENTS};
 use crate::process;
 use crate::recommend::{AlchemistAttributes, MarketConditions};
 use crate::simulate;

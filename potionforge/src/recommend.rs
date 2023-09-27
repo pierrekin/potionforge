@@ -6,7 +6,7 @@ use coin_cbc::{raw::Status, Col, Model, Sense};
 use itertools::Itertools;
 
 use crate::models::{
-    traits::GetByKey, AlchemistAttribute, Department, IngredientKey, MarketCondition, PotionKind,
+    traits::GetByKey, AlchemistAttribute, Department, IngredientKey, MarketCondition,
     PotionKindKey, Recipe, POTION_KINDS,
 };
 
