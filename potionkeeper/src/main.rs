@@ -19,7 +19,7 @@ fn main() {
                 )
                 .arg(
                     arg!(-c --config <PATH> "Config file")
-                        .default_value("config.yml")
+                        .default_value("recommend.yml")
                         .required(false),
                 ),
         )
