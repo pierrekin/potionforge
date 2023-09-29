@@ -277,8 +277,20 @@ fn determine_element_potency(element: &Element, parts: &Vec<IngredientPart>) -> 
         .sum()
 }
 
-fn determine_branding_appeal(potion_kind: &PotionKind, branding_counts: &BrandingCounts) -> i32 {
-    let bulk_appeal = branding_counts.get(&Bulk).unwrap_or(&0);
+fn determine_branding_appeal(
+    potion_kind: &PotionKind,
+    potency: i32,
+    branding_counts: &BrandingCounts,
+) -> i32 {
+    // Bulk appeal only applies if the potion is offered with bulk pricing.
+    // As a rule of thumb, bulk pricing only makes sense if potency is below
+    // around 400.
+    let bulk_appeal: i32 = if potency < 400 {
+        *branding_counts.get(&Bulk).unwrap_or(&0)
+    } else {
+        0
+    };
+
     let department_appeal = match potion_kind.department {
         Department::Health => branding_counts.get(&Health),
         Department::Sourcery => branding_counts.get(&Sourcery),
@@ -370,19 +382,6 @@ pub fn simulate(ingredients: &[Ingredient], simulate_config: &SimulateConfig) ->
     let overall_taste = determine_overall_taste(&parts);
     let overall_toxicity = determine_overall_toxicity(&parts);
 
-    let purity_appeal = determine_purity_appeal(overall_purity);
-    let taste_appeal = determine_taste_appeal(potion_kind, overall_taste);
-    let toxicity_appeal = determine_toxicity_appeal(potion_kind, overall_toxicity);
-    let market_appeal = determine_market_appeal(potion_kind, &simulate_config.market_conditions);
-    let alchemist_appeal = determine_alchemist_appeal(&simulate_config.alchemists_attributes);
-    let branding_appeal = determine_branding_appeal(potion_kind, &simulate_config.branding_counts);
-    let overall_appeal = purity_appeal
-        + taste_appeal
-        + toxicity_appeal
-        + market_appeal
-        + alchemist_appeal
-        + branding_appeal;
-
     let purity_potency = determine_purity_potency(&parts);
     let toxicity_potency = determine_toxicity_potency(potion_kind, &parts);
     let element_potency = determine_element_potency(&element, &parts);
@@ -394,6 +393,23 @@ pub fn simulate(ingredients: &[Ingredient], simulate_config: &SimulateConfig) ->
         + element_potency
         + main_effect_potency
         + alchemist_potency;
+
+    let purity_appeal = determine_purity_appeal(overall_purity);
+    let taste_appeal = determine_taste_appeal(potion_kind, overall_taste);
+    let toxicity_appeal = determine_toxicity_appeal(potion_kind, overall_toxicity);
+    let market_appeal = determine_market_appeal(potion_kind, &simulate_config.market_conditions);
+    let alchemist_appeal = determine_alchemist_appeal(&simulate_config.alchemists_attributes);
+    let branding_appeal = determine_branding_appeal(
+        potion_kind,
+        overall_potency,
+        &simulate_config.branding_counts,
+    );
+    let overall_appeal = purity_appeal
+        + taste_appeal
+        + toxicity_appeal
+        + market_appeal
+        + alchemist_appeal
+        + branding_appeal;
 
     Some(Recipe {
         potion_kind_key: potion_kind.key.clone(),
