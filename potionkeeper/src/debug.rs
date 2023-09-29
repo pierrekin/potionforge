@@ -4,7 +4,7 @@ use potionforge::{
     enumerate::process_ingredient,
     models::{traits::GetByKey, Ingredient, IngredientKey, Process, Recipe, INGREDIENTS},
     recommend::{AlchemistAttributes, BrandingCounts, MarketConditions},
-    simulate::simulate,
+    simulate::{simulate, SimulateConfig},
 };
 use serde::Deserialize;
 
@@ -36,12 +36,12 @@ pub fn debug(config_filename: String) -> Result<(), Box<dyn std::error::Error>> 
                     process_ingredient(raw_ingredient, ingredient_process)
                 })
                 .collect();
-            simulate(
-                ingredients.as_slice(),
-                &AlchemistAttributes::new(),
-                &MarketConditions::new(),
-                &BrandingCounts::new(),
-            )
+            let simulate_config = SimulateConfig {
+                alchemists_attributes: AlchemistAttributes::new(),
+                market_conditions: MarketConditions::new(),
+                branding_counts: BrandingCounts::new(),
+            };
+            simulate(ingredients.as_slice(), &simulate_config)
         })
         .collect();
 

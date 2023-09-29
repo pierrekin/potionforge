@@ -12,6 +12,13 @@ use crate::{
     recommend::{AlchemistAttributes, BrandingCounts, MarketConditions},
 };
 
+#[derive(Debug)]
+pub struct SimulateConfig {
+    pub alchemists_attributes: AlchemistAttributes,
+    pub market_conditions: MarketConditions,
+    pub branding_counts: BrandingCounts,
+}
+
 pub fn collect_parts(ingredients: &[Ingredient]) -> Vec<IngredientPart> {
     let mut result = Vec::new();
     for ingredient in ingredients {
@@ -270,67 +277,6 @@ fn determine_element_potency(element: &Element, parts: &Vec<IngredientPart>) -> 
         .sum()
 }
 
-pub fn simulate(
-    ingredients: &[Ingredient],
-    alchemists_attributes: &AlchemistAttributes,
-    market_conditions: &MarketConditions,
-    branding_counts: &BrandingCounts,
-) -> Option<Recipe> {
-    let parts = collect_parts(ingredients);
-    let element: Option<Element> = find_dominant_element(&parts);
-    let main_effect: Option<MainEffect> = find_dominant_main_effect(&parts);
-
-    if element.is_none() || main_effect.is_none() {
-        return None;
-    }
-
-    let element = element.unwrap();
-    let main_effect = main_effect.unwrap();
-
-    // Safe to unwrap due to check above.
-    let valid_combination = ValidCombination::new(main_effect, element).unwrap();
-    let potion_kind = models::POTION_KINDS.get_by_parts(valid_combination);
-
-    let overall_purity = determine_overall_purity(&parts);
-    let overall_taste = determine_overall_taste(&parts);
-    let overall_toxicity = determine_overall_toxicity(&parts);
-
-    let purity_appeal = determine_purity_appeal(overall_purity);
-    let taste_appeal = determine_taste_appeal(potion_kind, overall_taste);
-    let toxicity_appeal = determine_toxicity_appeal(potion_kind, overall_toxicity);
-    let market_appeal = determine_market_appeal(potion_kind, &market_conditions);
-    let alchemist_appeal = determine_alchemist_appeal(&alchemists_attributes);
-    let branding_appeal = determine_branding_appeal(potion_kind, &branding_counts);
-    let overall_appeal = purity_appeal
-        + taste_appeal
-        + toxicity_appeal
-        + market_appeal
-        + alchemist_appeal
-        + branding_appeal;
-
-    let purity_potency = determine_purity_potency(&parts);
-    let toxicity_potency = determine_toxicity_potency(potion_kind, &parts);
-    let element_potency = determine_element_potency(&element, &parts);
-    let main_effect_potency = determine_main_effect_potency(&main_effect, &parts);
-    let alchemist_potency =
-        determine_alchemist_potency(&alchemists_attributes, &ingredients, &parts);
-    let overall_potency = purity_potency
-        + toxicity_potency
-        + element_potency
-        + main_effect_potency
-        + alchemist_potency;
-
-    Some(Recipe {
-        potion_kind_key: potion_kind.key.clone(),
-        ingredients: ingredients.to_vec(),
-        overall_purity: overall_purity,
-        overall_taste: overall_taste,
-        overall_toxicity: overall_toxicity,
-        overall_appeal: overall_appeal,
-        overall_potency: overall_potency,
-    })
-}
-
 fn determine_branding_appeal(potion_kind: &PotionKind, branding_counts: &BrandingCounts) -> i32 {
     let bulk_appeal = branding_counts.get(&Bulk).unwrap_or(&0);
     let department_appeal = match potion_kind.department {
@@ -404,6 +350,62 @@ fn determine_alchemist_potency(
         + (mushroom_count.signum() * fungi_connoisseur_count * 10)
 }
 
+pub fn simulate(ingredients: &[Ingredient], simulate_config: &SimulateConfig) -> Option<Recipe> {
+    let parts = collect_parts(ingredients);
+    let element: Option<Element> = find_dominant_element(&parts);
+    let main_effect: Option<MainEffect> = find_dominant_main_effect(&parts);
+
+    if element.is_none() || main_effect.is_none() {
+        return None;
+    }
+
+    let element = element.unwrap();
+    let main_effect = main_effect.unwrap();
+
+    // Safe to unwrap due to check above.
+    let valid_combination = ValidCombination::new(main_effect, element).unwrap();
+    let potion_kind = models::POTION_KINDS.get_by_parts(valid_combination);
+
+    let overall_purity = determine_overall_purity(&parts);
+    let overall_taste = determine_overall_taste(&parts);
+    let overall_toxicity = determine_overall_toxicity(&parts);
+
+    let purity_appeal = determine_purity_appeal(overall_purity);
+    let taste_appeal = determine_taste_appeal(potion_kind, overall_taste);
+    let toxicity_appeal = determine_toxicity_appeal(potion_kind, overall_toxicity);
+    let market_appeal = determine_market_appeal(potion_kind, &simulate_config.market_conditions);
+    let alchemist_appeal = determine_alchemist_appeal(&simulate_config.alchemists_attributes);
+    let branding_appeal = determine_branding_appeal(potion_kind, &simulate_config.branding_counts);
+    let overall_appeal = purity_appeal
+        + taste_appeal
+        + toxicity_appeal
+        + market_appeal
+        + alchemist_appeal
+        + branding_appeal;
+
+    let purity_potency = determine_purity_potency(&parts);
+    let toxicity_potency = determine_toxicity_potency(potion_kind, &parts);
+    let element_potency = determine_element_potency(&element, &parts);
+    let main_effect_potency = determine_main_effect_potency(&main_effect, &parts);
+    let alchemist_potency =
+        determine_alchemist_potency(&simulate_config.alchemists_attributes, &ingredients, &parts);
+    let overall_potency = purity_potency
+        + toxicity_potency
+        + element_potency
+        + main_effect_potency
+        + alchemist_potency;
+
+    Some(Recipe {
+        potion_kind_key: potion_kind.key.clone(),
+        ingredients: ingredients.to_vec(),
+        overall_purity: overall_purity,
+        overall_taste: overall_taste,
+        overall_toxicity: overall_toxicity,
+        overall_appeal: overall_appeal,
+        overall_potency: overall_potency,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -468,15 +470,12 @@ mod tests {
                 .map(|&key| INGREDIENTS.get_by_key(&key).clone())
                 .collect();
 
-            let alchemist_attributes = AlchemistAttributes::new();
-            let market_conditions = MarketConditions::new();
-            let branding_counts = BrandingCounts::new();
-            let result = simulate(
-                &ingredients,
-                &alchemist_attributes,
-                &market_conditions,
-                &branding_counts,
-            );
+            let simulate_config = SimulateConfig {
+                alchemists_attributes: AlchemistAttributes::new(),
+                market_conditions: MarketConditions::new(),
+                branding_counts: BrandingCounts::new(),
+            };
+            let result = simulate(&ingredients, &simulate_config);
             assert!(result.is_some());
 
             let recipe = result.unwrap();

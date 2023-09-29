@@ -2,10 +2,18 @@ use crate::models::traits::GetByKey;
 use crate::models::{Ingredient, IngredientKey, IngredientPart, Process, Recipe, INGREDIENTS};
 use crate::process;
 use crate::recommend::{AlchemistAttributes, BrandingCounts, MarketConditions};
-use crate::simulate::{self, collect_parts};
+use crate::simulate::{self, collect_parts, SimulateConfig};
 
 use itertools::Itertools;
 use rayon::prelude::*;
+
+#[derive(Debug)]
+pub struct EnumerateConfig {
+    pub ingredients: Vec<IngredientKey>,
+    pub arcane_power: i64,
+    pub utilisation: i32,
+    pub processes: Vec<Process>,
+}
 
 pub fn process_ingredient(ingredient: &Ingredient, processes: &Vec<Process>) -> Ingredient {
     let mut ingredient = ingredient.clone();
