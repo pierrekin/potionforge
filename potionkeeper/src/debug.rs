@@ -1,8 +1,8 @@
 use std::{collections::HashMap, fs::File, io::Read};
 
 use potionforge::{
-    enumerate::process_ingredient,
     models::{traits::GetByKey, Ingredient, IngredientKey, Process, Recipe, INGREDIENTS},
+    process::process_ingredient,
     recommend::{AlchemistAttributes, BrandingCounts, MarketConditions},
     simulate::{simulate, SimulateConfig},
 };

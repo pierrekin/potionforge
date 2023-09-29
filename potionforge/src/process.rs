@@ -1,4 +1,48 @@
-use crate::models::{Element, Ingredient, IngredientPart, IngredientParts, IngredientProcess};
+use crate::models::{
+    Element, Ingredient, IngredientPart, IngredientParts, IngredientProcess, Process,
+};
+
+pub fn process_ingredient(ingredient: &Ingredient, processes: &Vec<Process>) -> Ingredient {
+    let mut ingredient = ingredient.clone();
+
+    if processes.contains(&Process::Crush) {
+        if let Some(crushed_ingredient) = process_crush(&ingredient) {
+            ingredient = crushed_ingredient;
+        };
+    }
+
+    if processes.contains(&Process::Blanch) {
+        if let Some(blanched_ingredient) = process_blanch(&ingredient) {
+            ingredient = blanched_ingredient;
+        }
+    }
+
+    if processes.contains(&Process::Dry) {
+        if let Some(dried_ingredient) = process_dry(&ingredient) {
+            ingredient = dried_ingredient;
+        }
+    }
+
+    if processes.contains(&Process::Pickle) {
+        if let Some(pickled_ingredient) = process_pickle(&ingredient) {
+            ingredient = pickled_ingredient;
+        }
+    }
+
+    if processes.contains(&Process::Ferment) {
+        if let Some(ferment_result) = process_ferment(&ingredient) {
+            ingredient = ferment_result;
+        }
+    }
+
+    if processes.contains(&Process::Infuse) {
+        if let Some(infuse_result) = process_infuse(&ingredient) {
+            ingredient = infuse_result;
+        }
+    }
+
+    ingredient
+}
 
 pub fn process_crush(ingredient: &Ingredient) -> Option<Ingredient> {
     match &ingredient.parts {

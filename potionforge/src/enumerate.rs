@@ -14,48 +14,6 @@ pub struct EnumerateConfig {
     pub processes: Vec<Process>,
 }
 
-pub fn process_ingredient(ingredient: &Ingredient, processes: &Vec<Process>) -> Ingredient {
-    let mut ingredient = ingredient.clone();
-
-    if processes.contains(&Process::Crush) {
-        if let Some(crushed_ingredient) = process::process_crush(&ingredient) {
-            ingredient = crushed_ingredient;
-        };
-    }
-
-    if processes.contains(&Process::Blanch) {
-        if let Some(blanched_ingredient) = process::process_blanch(&ingredient) {
-            ingredient = blanched_ingredient;
-        }
-    }
-
-    if processes.contains(&Process::Dry) {
-        if let Some(dried_ingredient) = process::process_dry(&ingredient) {
-            ingredient = dried_ingredient;
-        }
-    }
-
-    if processes.contains(&Process::Pickle) {
-        if let Some(pickled_ingredient) = process::process_pickle(&ingredient) {
-            ingredient = pickled_ingredient;
-        }
-    }
-
-    if processes.contains(&Process::Ferment) {
-        if let Some(ferment_result) = process::process_ferment(&ingredient) {
-            ingredient = ferment_result;
-        }
-    }
-
-    if processes.contains(&Process::Infuse) {
-        if let Some(infuse_result) = process::process_infuse(&ingredient) {
-            ingredient = infuse_result;
-        }
-    }
-
-    ingredient
-}
-
 pub fn permute_ingredient(ingredient: &Ingredient, processes: &Vec<Process>) -> Vec<Ingredient> {
     let mut result = vec![ingredient.clone()];
 
