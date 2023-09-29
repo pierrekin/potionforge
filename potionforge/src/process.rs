@@ -189,6 +189,40 @@ pub fn process_ferment(ingredient: &Ingredient) -> Option<Ingredient> {
 }
 
 pub fn process_infuse(ingredient: &Ingredient) -> Option<Ingredient> {
+    let has_element = match &ingredient.parts {
+        IngredientParts::Raw(a, b, c, d)
+        | IngredientParts::Fermented(a, b, c, d)
+        | IngredientParts::Infused(a, b, c, d)
+        | IngredientParts::FermentedInfused(a, b, c, d) => {
+            matches!(a, IngredientPart::Element(_))
+                || matches!(b, IngredientPart::Element(_))
+                || matches!(c, IngredientPart::Element(_))
+                || matches!(d, IngredientPart::Element(_))
+        }
+        IngredientParts::Crushed(a, b)
+        | IngredientParts::Blanched(a, b)
+        | IngredientParts::Dried(a, b)
+        | IngredientParts::Pickled(a, b)
+        | IngredientParts::CrushedFermented(a, b)
+        | IngredientParts::BlanchedFermented(a, b)
+        | IngredientParts::DriedFermented(a, b)
+        | IngredientParts::PickledFermented(a, b)
+        | IngredientParts::CrushedInfused(a, b)
+        | IngredientParts::BlanchedInfused(a, b)
+        | IngredientParts::DriedInfused(a, b)
+        | IngredientParts::PickledInfused(a, b)
+        | IngredientParts::CrushedFermentedInfused(a, b)
+        | IngredientParts::BlanchedFermentedInfused(a, b)
+        | IngredientParts::DriedFermentedInfused(a, b)
+        | IngredientParts::PickledFermentedInfused(a, b) => {
+            matches!(a, IngredientPart::Element(_)) || matches!(b, IngredientPart::Element(_))
+        }
+    };
+
+    if !has_element {
+        return None;
+    }
+
     let new_parts = match &ingredient.parts {
         IngredientParts::Raw(a, b, c, d) => IngredientParts::Infused(
             swap_elements(a.clone()),
