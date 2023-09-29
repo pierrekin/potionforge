@@ -326,7 +326,7 @@ pub static POTION_KINDS: [(PotionKindKey, PotionKind); 16] = [
             key: PotionKindKey::Sleep,
             department: Department::Health,
             parts: (MainEffect::Beast, Element::Water),
-            toxicity_effect: ToxicityEffect::ToxicPositive,
+            toxicity_effect: ToxicityEffect::ToxicNegative,
             taste_effect: TasteEffect::TastyPositive,
         },
     ),
