@@ -89,7 +89,8 @@ pub fn recommend(
     };
 
     println!("Enumerating possible recipes...");
-    let possible_recipes: Vec<Recipe> = enumerate::enumerate(&enumerate_config, &simulate_config);
+    let possible_recipes: Vec<Recipe> =
+        enumerate::enumerate_and_simulate(&enumerate_config, &simulate_config);
 
     println!("Recommending optimal recipes...");
     let recommendations: Vec<Recipe> = recommend::recommend(possible_recipes, &recommend_config);

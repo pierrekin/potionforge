@@ -135,7 +135,7 @@ fn is_combination_reasonable(combination: &Vec<Ingredient>) -> bool {
     return !parts.contains(&IngredientPart::Impurity);
 }
 
-pub fn enumerate(
+pub fn enumerate_and_simulate(
     enumerate_config: &EnumerateConfig,
     simulate_config: &SimulateConfig,
     // raw_ingredients: &Vec<&IngredientKey>,
