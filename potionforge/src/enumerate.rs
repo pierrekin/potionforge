@@ -1,5 +1,8 @@
 use crate::models::traits::GetByKey;
-use crate::models::{Ingredient, IngredientKey, IngredientPart, Process, Recipe, INGREDIENTS};
+use crate::models::{
+    Ingredient, IngredientKey, IngredientPart, OverallToxicity, Process, Recipe, ToxicityEffect,
+    INGREDIENTS, POTION_KINDS,
+};
 use crate::process;
 use crate::simulate::{self, collect_parts, SimulateConfig};
 
@@ -93,6 +96,34 @@ fn is_combination_reasonable(combination: &Vec<Ingredient>) -> bool {
     return !parts.contains(&IngredientPart::Impurity);
 }
 
+fn is_recipe_reasonable(recipe: &Recipe) -> bool {
+    // If the recipe overall appeal is negative.
+    if recipe.overall_appeal < 0 {
+        return false;
+    }
+
+    // If the recipe toxicity and toxicity appeal do not match.
+    let potion_kind = POTION_KINDS.get_by_key(&recipe.potion_kind_key);
+    match potion_kind.toxicity_effect {
+        ToxicityEffect::ToxicPositive => {
+            if matches!(recipe.overall_toxicity, OverallToxicity::Antitoxic)
+                || matches!(recipe.overall_toxicity, OverallToxicity::Veryantitoxic)
+            {
+                return false;
+            }
+        }
+        ToxicityEffect::ToxicNegative => {
+            if matches!(recipe.overall_toxicity, OverallToxicity::Toxic)
+                || matches!(recipe.overall_toxicity, OverallToxicity::VeryToxic)
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 pub fn enumerate_and_simulate(
     enumerate_config: &EnumerateConfig,
     simulate_config: &SimulateConfig,
@@ -127,8 +158,18 @@ pub fn enumerate_and_simulate(
                     if !is_combination_reasonable(&local_combination) {
                         return None;
                     }
-                    let result = simulate::simulate(local_combination.as_slice(), &simulate_config);
-                    result
+                    let recipe = simulate::simulate(local_combination.as_slice(), &simulate_config);
+                    if recipe.is_none() {
+                        return None;
+                    }
+
+                    let recipe = recipe.unwrap();
+
+                    if !is_recipe_reasonable(&recipe) {
+                        return None;
+                    }
+
+                    Some(recipe)
                 })
                 .collect::<Vec<_>>()
         })
