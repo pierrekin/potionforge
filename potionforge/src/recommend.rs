@@ -15,6 +15,14 @@ pub type AlchemistAttributes = HashMap<AlchemistAttribute, i32>;
 pub type MarketConditions = HashMap<PotionKindKey, Vec<MarketCondition>>;
 pub type BrandingCounts = HashMap<BrandingCategory, i32>;
 
+#[derive(Debug)]
+pub struct RecommendConfig {
+    pub available_ingredients: IngredientCounts,
+    pub utilisation: i32,
+    pub potions: Vec<PotionKindKey>,
+    pub solver_loglevel: String,
+}
+
 /// Check whether two floats a and b are within epsilon of each other.
 fn nearly_equal(a: f64, b: f64, epsilon: f64) -> bool {
     (a - b).abs() < epsilon
@@ -62,11 +70,20 @@ fn create_ingredient_constraints(
     }
 }
 
-fn create_potion_kind_constraints(model: &mut Model, columns: &[Col], recipes: &[Recipe]) {
+fn create_potion_kind_constraints(
+    model: &mut Model,
+    columns: &[Col],
+    recipes: &[Recipe],
+    potions: &[PotionKindKey],
+) {
     // No more than one of each potion kind.
     for (potion_kind_key, _) in POTION_KINDS.iter() {
         let potion_kind_row = model.add_row();
         model.set_row_upper(potion_kind_row, 1.);
+
+        if potions.contains(potion_kind_key) {
+            model.set_row_lower(potion_kind_row, 1.);
+        }
 
         for (column, recipe) in columns.iter().zip(recipes.iter()) {
             if recipe.potion_kind_key == *potion_kind_key {
@@ -111,6 +128,7 @@ fn maximise_recipes(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
     utilisation: i32,
+    potions: &[PotionKindKey],
     solver_loglevel: &str,
 ) -> i32 {
     // TODO: Signal progress to the calling process.
@@ -137,7 +155,7 @@ fn maximise_recipes(
         &available_ingredients,
         utilisation,
     );
-    create_potion_kind_constraints(&mut model, &columns, &possible_recipes);
+    create_potion_kind_constraints(&mut model, &columns, &possible_recipes, &potions);
     create_department_constraints(&mut model, &columns, &possible_recipes);
 
     // Solve the problem. Returns the solution
@@ -172,6 +190,7 @@ fn maximise_appeal(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
     utilisation: i32,
+    potions: &[PotionKindKey],
     min_recipes: i32,
     solver_loglevel: &str,
 ) -> i32 {
@@ -199,7 +218,7 @@ fn maximise_appeal(
         &available_ingredients,
         utilisation,
     );
-    create_potion_kind_constraints(&mut model, &columns, &possible_recipes);
+    create_potion_kind_constraints(&mut model, &columns, &possible_recipes, &potions);
     create_department_constraints(&mut model, &columns, &possible_recipes);
     create_number_constraints(&mut model, &columns, min_recipes);
 
@@ -240,6 +259,7 @@ fn maximise_potency(
     possible_recipes: &[Recipe],
     available_ingredients: &HashMap<IngredientKey, i32>,
     utilisation: i32,
+    potions: &[PotionKindKey],
     min_recipes: i32,
     min_appeal: i32,
     solver_loglevel: &str,
@@ -268,7 +288,7 @@ fn maximise_potency(
         &available_ingredients,
         utilisation,
     );
-    create_potion_kind_constraints(&mut model, &columns, &possible_recipes);
+    create_potion_kind_constraints(&mut model, &columns, &possible_recipes, &potions);
     create_department_constraints(&mut model, &columns, &possible_recipes);
     create_number_constraints(&mut model, &columns, min_recipes);
     create_appeal_constraints(&mut model, &columns, &possible_recipes, min_appeal);
@@ -289,31 +309,29 @@ fn maximise_potency(
         .collect()
 }
 
-pub fn recommend(
-    possible_recipes: Vec<Recipe>,
-    available_ingredients: &IngredientCounts,
-    utilisation: i32,
-    solver_loglevel: String,
-) -> Vec<Recipe> {
+pub fn recommend(possible_recipes: Vec<Recipe>, config: &RecommendConfig) -> Vec<Recipe> {
     let recipe_count = maximise_recipes(
         &possible_recipes,
-        available_ingredients,
-        utilisation,
-        &solver_loglevel,
+        &config.available_ingredients,
+        config.utilisation,
+        &config.potions,
+        &config.solver_loglevel,
     );
     let appeal = maximise_appeal(
         &possible_recipes,
-        available_ingredients,
-        utilisation,
+        &config.available_ingredients,
+        config.utilisation,
+        &config.potions,
         recipe_count,
-        &solver_loglevel,
+        &config.solver_loglevel,
     );
     maximise_potency(
         &possible_recipes,
-        available_ingredients,
-        utilisation,
+        &config.available_ingredients,
+        config.utilisation,
+        &config.potions,
         recipe_count,
         appeal,
-        &solver_loglevel,
+        &config.solver_loglevel,
     )
 }

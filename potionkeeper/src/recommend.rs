@@ -7,13 +7,13 @@ use potionforge::{enumerate, recommend, simulate};
 
 use serde::Deserialize;
 
-use potionforge::models::{Process, Recipe};
+use potionforge::models::{PotionKindKey, Process, Recipe};
 use potionforge::recommend::{
-    AlchemistAttributes, BrandingCounts, IngredientCounts, MarketConditions,
+    AlchemistAttributes, BrandingCounts, IngredientCounts, MarketConditions, RecommendConfig,
 };
 
 #[derive(Debug, Deserialize)]
-struct RecommendConfig {
+struct _RecommendConfig {
     arcane_power: i64,
     utilisation: i32,
     processes: Vec<Process>,
@@ -21,10 +21,11 @@ struct RecommendConfig {
     alchemists: AlchemistAttributes,
     market: MarketConditions,
     branding: BrandingCounts,
+    potions: Vec<PotionKindKey>,
 }
 
 /// Load configuration from the specified file matching the Config struct.
-fn load_config(filename: String) -> Result<RecommendConfig, Box<dyn std::error::Error>> {
+fn load_config(filename: String) -> Result<_RecommendConfig, Box<dyn std::error::Error>> {
     let mut config_file = File::open(filename)?;
     let mut config_contents = String::new();
     config_file.read_to_string(&mut config_contents)?;
@@ -80,16 +81,18 @@ pub fn recommend(
         branding_counts: config.branding,
     };
 
+    let recommend_config = RecommendConfig {
+        available_ingredients: config.ingredients,
+        utilisation: config.utilisation,
+        potions: config.potions,
+        solver_loglevel,
+    };
+
     println!("Enumerating possible recipes...");
     let possible_recipes: Vec<Recipe> = enumerate::enumerate(&enumerate_config, &simulate_config);
 
     println!("Recommending optimal recipes...");
-    let recommendations: Vec<Recipe> = recommend::recommend(
-        possible_recipes,
-        &config.ingredients,
-        config.utilisation,
-        solver_loglevel,
-    );
+    let recommendations: Vec<Recipe> = recommend::recommend(possible_recipes, &recommend_config);
 
     display_results(&recommendations);
     Ok(())

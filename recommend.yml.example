@@ -1,5 +1,5 @@
 arcane_power: 2
-utilisation: 5
+utilisation: 3
 
 processes:
   - Blanch
@@ -10,25 +10,28 @@ processes:
   # - Infuse
 
 ingredients:
-  Pluteus: 1
-  Thyme: 1
-  Sage: 1
-
+  # Pluteus: 1
+  # Thyme: 2
+  # Sage: 2
   # Anise: 1
   # Catnip: 1
-  # Deadmans: 1
-  # Deathcap: 1
-  # Elven: 1
-  # Flyagaric: 1
+  Deadmans: 1
+  Deathcap: 1
+  Elven: 1
+  Flyagaric: 1
   # Lupine: 1
-  # Mandrake: 1
+  # Mandrake: 3
   # Stinkhorn: 1
   # Wizards: 1
   # Wormwood: 1
+  # Nightshade: 1
+  # Asporeus: 1
+
+potions: []
 
 alchemists:
   FungiConnoisseur: 0
-  Herbalist: 0
+  Herbalist: 1
   Optimiser: 1
   Acclaimed: 0
 
@@ -54,4 +57,4 @@ market:
   Speech: [InDemand]
   Silence: [InDemand]
   Conjuring: [InDemand]
-  Exorcism: [InDemand]
+  Exorcism: [HighDemand]
