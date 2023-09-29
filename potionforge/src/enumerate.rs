@@ -1,7 +1,6 @@
 use crate::models::traits::GetByKey;
 use crate::models::{Ingredient, IngredientKey, IngredientPart, Process, Recipe, INGREDIENTS};
 use crate::process;
-use crate::recommend::{AlchemistAttributes, BrandingCounts, MarketConditions};
 use crate::simulate::{self, collect_parts, SimulateConfig};
 
 use itertools::Itertools;

@@ -3,7 +3,7 @@ use std::{fs::File, io::Read};
 use crate::printer;
 use potionforge::enumerate::EnumerateConfig;
 use potionforge::simulate::SimulateConfig;
-use potionforge::{enumerate, recommend, simulate};
+use potionforge::{enumerate, recommend};
 
 use serde::Deserialize;
 
