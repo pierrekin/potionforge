@@ -105,44 +105,6 @@ pub fn permute_ingredients(
         .collect()
 }
 
-fn binomial_coefficient(n: i64, k: i64) -> i64 {
-    let mut coeff = 1;
-    for i in 0..k {
-        coeff *= n - i;
-        coeff /= i + 1;
-    }
-    coeff
-}
-
-fn generate_combination(ingredients: &[Ingredient], k: i64, index: i64) -> Vec<Ingredient> {
-    let n = ingredients.len() as i64;
-    let mut combination = Vec::with_capacity(k as usize);
-    let mut remaining_index = index;
-    let mut used = vec![false; n as usize];
-
-    for i in 0..k {
-        let binom = binomial_coefficient(n - i - 1, k - i - 1);
-        let mut chosen = remaining_index / binom;
-        remaining_index %= binom;
-
-        let mut actual_index = 0;
-        while chosen >= 0 {
-            if !used[actual_index] {
-                if chosen == 0 {
-                    break;
-                }
-                chosen -= 1;
-            }
-            actual_index += 1;
-        }
-
-        used[actual_index] = true;
-        combination.push(ingredients[actual_index].clone());
-    }
-
-    combination
-}
-
 /// Validate a combination of ingredienst is a possible recipe.
 fn is_combination_valid(combination: &Vec<Ingredient>) -> bool {
     // TODO: This count shouldn't be hard coded here.
@@ -166,89 +128,44 @@ fn is_combination_reasonable(combination: &Vec<Ingredient>) -> bool {
     return !parts.contains(&IngredientPart::Impurity);
 }
 
-pub fn _get_all_recipes(
-    raw_ingredients: &Vec<&IngredientKey>,
-    processes: &Vec<Process>,
-    r: i64,
-    alchemist_attributes: &AlchemistAttributes,
-    market_conditions: &MarketConditions,
-    branding_counts: &BrandingCounts,
+pub fn enumerate(
+    enumerate_config: &EnumerateConfig,
+    simulate_config: &SimulateConfig,
+    // raw_ingredients: &Vec<&IngredientKey>,
+    // processes: &Vec<Process>,
+    // r: i64,
+    // alchemist_attributes: &AlchemistAttributes,
+    // market_conditions: &MarketConditions,
+    // branding_counts: &BrandingCounts,
 ) -> Vec<Recipe> {
-    let raw_ingredients: Vec<_> = raw_ingredients
+    let raw_ingredients: Vec<_> = enumerate_config
+        .ingredients
         .iter()
         .map(|key| INGREDIENTS.get_by_key(key))
         .collect();
+    let all_ingredients =
+        permute_ingredients(raw_ingredients.as_slice(), &enumerate_config.processes);
 
-    let all_ingredients = permute_ingredients(raw_ingredients.as_slice(), processes);
-
-    (2..=r)
-        .into_iter()
-        .flat_map(|k| {
-            let total_combinations = binomial_coefficient(all_ingredients.len() as i64, k);
-            (0..total_combinations)
-                .into_par_iter()
-                .filter_map(|index| {
-                    let combination = generate_combination(&all_ingredients, k, index as i64);
-                    if !is_combination_valid(&combination) {
-                        return None;
-                    }
-                    if !is_combination_reasonable(&combination) {
-                        return None;
-                    }
-                    let result = simulate::simulate(
-                        combination.as_slice(),
-                        alchemist_attributes,
-                        market_conditions,
-                        branding_counts,
-                    );
-                    match result {
-                        Some(inner_value) => Some(inner_value),
-                        None => None,
-                    }
-                })
-                .collect::<Vec<_>>()
-                .into_iter()
-        })
-        .collect()
-}
-
-pub fn get_all_recipes(
-    raw_ingredients: &Vec<&IngredientKey>,
-    processes: &Vec<Process>,
-    r: i64,
-    alchemist_attributes: &AlchemistAttributes,
-    market_conditions: &MarketConditions,
-    branding_counts: &BrandingCounts,
-) -> Vec<Recipe> {
-    let raw_ingredients: Vec<_> = raw_ingredients
-        .iter()
-        .map(|key| INGREDIENTS.get_by_key(key))
-        .collect();
-
-    let all_ingredients = permute_ingredients(raw_ingredients.as_slice(), processes);
-
-    (2..=r)
-        .into_iter()
+    (2..=enumerate_config.arcane_power)
+        .into_par_iter()
         .flat_map(|k| {
             all_ingredients
                 .iter()
                 .combinations(k as usize)
+                .collect::<Vec<_>>()
+                .into_par_iter()
                 .filter_map(|combination| {
                     let local_combination = combination.into_iter().cloned().collect();
                     if !is_combination_valid(&local_combination) {
                         return None;
                     }
-                    // if !is_combination_reasonable(&local_combination) {
-                    //     return None;
-                    // }
-                    let result = simulate::simulate(
-                        local_combination.as_slice(),
-                        alchemist_attributes,
-                        market_conditions,
-                        branding_counts,
-                    );
+                    if !is_combination_reasonable(&local_combination) {
+                        return None;
+                    }
+                    let result = simulate::simulate(local_combination.as_slice(), &simulate_config);
                     result
                 })
+                .collect::<Vec<_>>()
         })
         .collect()
 }
