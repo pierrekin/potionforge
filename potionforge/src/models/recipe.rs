@@ -5,7 +5,7 @@ use super::{
     traits::{GetByKey, GetName},
 };
 
-#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum Department {
     Health,
     Sourcery,

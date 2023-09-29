@@ -1,8 +1,6 @@
-extern crate coin_cbc;
-
 use std::collections::HashMap;
 
-use coin_cbc::{raw::Status, Col, Model, Sense};
+use highs::{Col, HighsModelStatus, RowProblem, Sense};
 use itertools::Itertools;
 
 use crate::models::{
@@ -20,7 +18,6 @@ pub struct RecommendConfig {
     pub available_ingredients: IngredientCounts,
     pub utilisation: i32,
     pub potions: Vec<PotionKindKey>,
-    pub solver_loglevel: String,
 }
 
 /// Check whether two floats a and b are within epsilon of each other.
@@ -28,18 +25,18 @@ fn nearly_equal(a: f64, b: f64, epsilon: f64) -> bool {
     (a - b).abs() < epsilon
 }
 
-fn create_binary_columns(model: &mut Model, num_columns: usize, objectives: Vec<f64>) -> Vec<Col> {
+fn create_binary_columns(pb: &mut RowProblem, objectives: &Vec<f64>) -> Vec<Col> {
+    let num_columns = objectives.len();
     let mut columns = Vec::with_capacity(num_columns);
     for (_, objective) in (0..num_columns).zip(objectives) {
-        let column = model.add_binary();
+        let column = pb.add_integer_column(objective.clone(), 0..1);
         columns.push(column);
-        model.set_obj_coeff(column, objective);
     }
     columns
 }
 
 fn create_ingredient_constraints(
-    model: &mut Model,
+    pb: &mut RowProblem,
     columns: &[Col],
     recipes: &[Recipe],
     available_ingredients: &IngredientCounts,
@@ -48,125 +45,116 @@ fn create_ingredient_constraints(
     // No more than the available amount of each ingredient.
     // For each available ingredient.
     for (ingredient_key, ingredient_count) in available_ingredients.iter() {
-        // Create a constraint for the ingredient.
-        let ingredient_row = model.add_row();
         // Only allow up to the available quantity of the ingredient to be used.
         let upper_occurrances = ingredient_count * utilisation;
-        model.set_row_upper(ingredient_row, upper_occurrances as f64);
 
         // For each recipe that might use the ingredient.
-        for (column, recipe) in columns.iter().zip(recipes.iter()) {
-            // If the recipe uses the ingredient
-            if recipe
-                .ingredients
-                .iter()
-                .map(|ingredient| ingredient.key)
-                .contains(ingredient_key)
-            {
-                // Add a coefficient indicating the reipe uses the ingredient.
-                model.set_weight(ingredient_row, *column, 1.);
-            }
-        }
+        // If the recipe uses the ingredient
+        // Add a coefficient indicating the reipe uses the ingredient.
+
+        let factors: Vec<(_, f64)> = columns
+            .iter()
+            .zip(recipes.iter())
+            .map(|(column, recipe)| {
+                let contains_key = recipe
+                    .ingredients
+                    .iter()
+                    .any(|ingredient| ingredient.key == *ingredient_key);
+
+                (*column, if contains_key { 1. } else { 0. })
+            })
+            .collect();
+
+        // Create a constraint for the ingredient.
+        pb.add_row(0..upper_occurrances, factors);
     }
 }
 
 fn create_potion_kind_constraints(
-    model: &mut Model,
+    pb: &mut RowProblem,
     columns: &[Col],
     recipes: &[Recipe],
     potions: &[PotionKindKey],
 ) {
     // No more than one of each potion kind.
     for (potion_kind_key, _) in POTION_KINDS.iter() {
-        let potion_kind_row = model.add_row();
-        model.set_row_upper(potion_kind_row, 1.);
-
-        if potions.contains(potion_kind_key) {
-            model.set_row_lower(potion_kind_row, 1.);
-        }
-
-        for (column, recipe) in columns.iter().zip(recipes.iter()) {
-            if recipe.potion_kind_key == *potion_kind_key {
-                model.set_weight(potion_kind_row, *column, 1.);
-            }
-        }
-    }
-}
-
-fn create_department_constraints(model: &mut Model, columns: &[Col], recipes: &[Recipe]) {
-    // Constaints for each department.
-    let health_row = model.add_row();
-    let sourcery_row = model.add_row();
-    let provisions_row = model.add_row();
-
-    // No more than specified recipes per department.
-    model.set_row_upper(health_row, 5.);
-    model.set_row_upper(sourcery_row, 5.);
-    model.set_row_upper(provisions_row, 5.);
-
-    // No fewer than specified recipes per department.
-    model.set_row_lower(health_row, 1.);
-    model.set_row_lower(sourcery_row, 1.);
-    model.set_row_lower(provisions_row, 1.);
-
-    for (column, recipe) in columns.iter().zip(recipes.iter()) {
-        let potion_kind = POTION_KINDS.get_by_key(&recipe.potion_kind_key);
-
-        if potion_kind.department == Department::Health {
-            model.set_weight(health_row, *column, 1.);
-        } else if potion_kind.department == Department::Sourcery {
-            model.set_weight(sourcery_row, *column, 1.);
-        } else if potion_kind.department == Department::Provisions {
-            model.set_weight(provisions_row, *column, 1.);
+        let upper_bound = 1.;
+        let lower_bound = if potions.contains(potion_kind_key) {
+            1.
         } else {
-            unreachable!();
-        }
+            0.
+        };
+
+        let factors: Vec<(_, f64)> = columns
+            .iter()
+            .zip(recipes.iter())
+            .map(|(column, recipe)| {
+                (
+                    *column,
+                    if recipe.potion_kind_key == *potion_kind_key {
+                        1.
+                    } else {
+                        0.
+                    },
+                )
+            })
+            .collect();
+
+        // Create a constraint for the potion kind.
+        pb.add_row(lower_bound..=upper_bound, factors);
     }
 }
 
-fn maximise_recipes(
-    possible_recipes: &Vec<Recipe>,
-    available_ingredients: &IngredientCounts,
-    utilisation: i32,
-    potions: &[PotionKindKey],
-    solver_loglevel: &str,
-) -> i32 {
-    // TODO: Signal progress to the calling process.
-    // println!("Maximising recipes.");
+fn create_department_constraints(pb: &mut RowProblem, columns: &[Col], recipes: &[Recipe]) {
+    let departments = [
+        Department::Health,
+        Department::Sourcery,
+        Department::Provisions,
+    ];
 
-    // Create the problem.
-    let mut model = Model::default();
-    model.set_parameter("logLevel", &solver_loglevel);
+    for &department in departments.iter() {
+        let upper_bound = 5.;
+        let lower_bound = 1.;
 
-    // Set objective sense.
-    model.set_obj_sense(Sense::Maximize);
+        let factors: Vec<(_, f64)> = columns
+            .iter()
+            .zip(recipes.iter())
+            .map(|(column, recipe)| {
+                let potion_kind = POTION_KINDS.get_by_key(&recipe.potion_kind_key);
+                (
+                    *column,
+                    if potion_kind.department == department {
+                        1.
+                    } else {
+                        0.
+                    },
+                )
+            })
+            .collect();
 
-    // Objective function: maximize the number of selected recipes
-    let objectives = vec![1.0; possible_recipes.len()];
+        // Create a constraint for each department.
+        pb.add_row(lower_bound..=upper_bound, factors);
+    }
+}
 
-    // The columns: a binary variable for each recipe with coeffecient 1.0.
-    let columns = create_binary_columns(&mut model, possible_recipes.len(), objectives);
+fn create_number_constraints(pb: &mut RowProblem, columns: &[Col], min_recipes: i32) {
+    let factors: Vec<(Col, f64)> = columns.iter().map(|&column| (column, 1.)).collect();
+    pb.add_row((min_recipes as f64).., factors);
+}
 
-    // The rows: constraints.
-    create_ingredient_constraints(
-        &mut model,
-        &columns,
-        &possible_recipes,
-        &available_ingredients,
-        utilisation,
-    );
-    create_potion_kind_constraints(&mut model, &columns, &possible_recipes, &potions);
-    create_department_constraints(&mut model, &columns, &possible_recipes);
+fn create_appeal_constraints(
+    pb: &mut RowProblem,
+    columns: &[Col],
+    possible_recipes: &[Recipe],
+    min_appeal: i32,
+) {
+    let factors: Vec<(Col, f64)> = columns
+        .iter()
+        .zip(possible_recipes.iter())
+        .map(|(&column, recipe)| (column, recipe.overall_appeal as f64))
+        .collect();
 
-    // Solve the problem. Returns the solution
-    let solution = model.solve();
-    let raw_solution = solution.raw().to_owned();
-
-    // Check the solver finished and solution is proven optimal.
-    assert_eq!(Status::Finished, raw_solution.status());
-    assert!(raw_solution.is_proven_optimal());
-
-    solution.raw().obj_value() as i32
+    pb.add_row(min_appeal as f64.., factors);
 }
 
 fn create_appeal_objectives(possible_recipes: &[Recipe]) -> Vec<f64> {
@@ -176,14 +164,57 @@ fn create_appeal_objectives(possible_recipes: &[Recipe]) -> Vec<f64> {
         .collect_vec()
 }
 
-fn create_number_constraints(model: &mut Model, columns: &[Col], min_recipes: i32) {
-    // At least min_recipes number of recipes
-    let recipes_row = model.add_row();
-    model.set_row_lower(recipes_row, min_recipes as f64);
+fn create_potency_objectives(possible_recipes: &[Recipe]) -> Vec<f64> {
+    possible_recipes
+        .iter()
+        .map(|recipe| recipe.overall_potency as f64)
+        .collect_vec()
+}
 
-    for column in columns.iter() {
-        model.set_weight(recipes_row, *column, 1.);
-    }
+fn maximise_recipes(
+    possible_recipes: &Vec<Recipe>,
+    available_ingredients: &IngredientCounts,
+    utilisation: i32,
+    potions: &[PotionKindKey],
+) -> i32 {
+    // TODO: Signal progress to the calling process.
+    // println!("Maximising recipes.");
+
+    // Create the problem.
+    let mut pb = RowProblem::default();
+
+    // Objective function: maximize the number of selected recipes
+    let objectives = vec![1.0; possible_recipes.len()];
+
+    // The columns: a binary variable for each recipe with coeffecient 1.0.
+    let columns = create_binary_columns(&mut pb, &objectives);
+
+    // The rows: constraints.
+    create_ingredient_constraints(
+        &mut pb,
+        &columns,
+        &possible_recipes,
+        &available_ingredients,
+        utilisation,
+    );
+    create_potion_kind_constraints(&mut pb, &columns, &possible_recipes, &potions);
+    create_department_constraints(&mut pb, &columns, &possible_recipes);
+
+    // Solve the problem. Returns the solution
+    let solved = pb.optimise(Sense::Maximise).solve();
+
+    // Check the solver finished and solution is proven optimal.
+    assert_eq!(solved.status(), HighsModelStatus::Optimal);
+
+    let solution = solved.get_solution();
+
+    let count = solution
+        .columns()
+        .iter()
+        .filter(|&&value| nearly_equal(value, 1., 1e-6))
+        .count();
+
+    count as i32
 }
 
 fn maximise_appeal(
@@ -192,67 +223,48 @@ fn maximise_appeal(
     utilisation: i32,
     potions: &[PotionKindKey],
     min_recipes: i32,
-    solver_loglevel: &str,
 ) -> i32 {
     // TODO: Signal progress to the calling process.
     // println!("Maximising appeal.");
 
     // Create the problem.
-    let mut model = Model::default();
-    model.set_parameter("logLevel", &solver_loglevel);
-
-    // Set objective sense.
-    model.set_obj_sense(Sense::Maximize);
+    let mut pb = RowProblem::default();
 
     // Objective function: maximize the combined appeal of all recipes
     let objectives = create_appeal_objectives(possible_recipes);
 
     // The columns: a binary variable for each recipe with coeffecient 1.0.
-    let columns = create_binary_columns(&mut model, possible_recipes.len(), objectives);
+    let columns = create_binary_columns(&mut pb, &objectives);
 
     // The rows: constraints.
     create_ingredient_constraints(
-        &mut model,
+        &mut pb,
         &columns,
         &possible_recipes,
         &available_ingredients,
         utilisation,
     );
-    create_potion_kind_constraints(&mut model, &columns, &possible_recipes, &potions);
-    create_department_constraints(&mut model, &columns, &possible_recipes);
-    create_number_constraints(&mut model, &columns, min_recipes);
+    create_potion_kind_constraints(&mut pb, &columns, &possible_recipes, &potions);
+    create_department_constraints(&mut pb, &columns, &possible_recipes);
+    create_number_constraints(&mut pb, &columns, min_recipes);
 
     // Solve the problem. Returns the solution
-    let solution = model.solve();
-    let raw_solution = solution.raw().to_owned();
+    let solved = pb.optimise(Sense::Maximise).solve();
 
     // Check the solver finished and solution is proven optimal.
-    assert_eq!(Status::Finished, raw_solution.status());
-    assert!(raw_solution.is_proven_optimal());
+    assert_eq!(solved.status(), HighsModelStatus::Optimal);
 
-    solution.raw().obj_value() as i32
-}
+    let solution = solved.get_solution();
 
-fn create_potency_objectives(possible_recipes: &[Recipe]) -> Vec<f64> {
-    possible_recipes
+    let total_appeal: f64 = solution
+        .columns()
         .iter()
-        .map(|recipe| recipe.overall_potency as f64)
-        .collect_vec()
-}
+        .zip(objectives)
+        .filter(|(value, _)| nearly_equal(**value, 1., 1e-6))
+        .map(|(_, appeal)| appeal)
+        .sum();
 
-fn create_appeal_constraints(
-    model: &mut Model,
-    columns: &[Col],
-    possible_recipes: &[Recipe],
-    min_appeal: i32,
-) {
-    // At least min_appeal overall appeal
-    let appeal_row = model.add_row();
-    model.set_row_lower(appeal_row, min_appeal as f64);
-
-    for (column, recipe) in columns.iter().zip(possible_recipes.iter()) {
-        model.set_weight(appeal_row, *column, recipe.overall_appeal as f64);
-    }
+    total_appeal as i32
 }
 
 fn maximise_potency(
@@ -262,51 +274,49 @@ fn maximise_potency(
     potions: &[PotionKindKey],
     min_recipes: i32,
     min_appeal: i32,
-    solver_loglevel: &str,
 ) -> Vec<Recipe> {
     // TODO: Signal progress to the calling process.
     // println!("Maximising appeal.");
 
     // Create the problem.
-    let mut model = Model::default();
-    model.set_parameter("logLevel", &solver_loglevel);
-
-    // Set objective sense.
-    model.set_obj_sense(Sense::Maximize);
+    let mut pb = RowProblem::default();
 
     // Objective function: maximize the combined potency of all recipes
     let objectives = create_potency_objectives(possible_recipes);
 
     // The columns: a binary variable for each recipe with coeffecient 1.0.
-    let columns = create_binary_columns(&mut model, possible_recipes.len(), objectives);
+    let columns = create_binary_columns(&mut pb, &objectives);
 
     // The rows: constraints.
     create_ingredient_constraints(
-        &mut model,
+        &mut pb,
         &columns,
         &possible_recipes,
         &available_ingredients,
         utilisation,
     );
-    create_potion_kind_constraints(&mut model, &columns, &possible_recipes, &potions);
-    create_department_constraints(&mut model, &columns, &possible_recipes);
-    create_number_constraints(&mut model, &columns, min_recipes);
-    create_appeal_constraints(&mut model, &columns, &possible_recipes, min_appeal);
+    create_potion_kind_constraints(&mut pb, &columns, &possible_recipes, &potions);
+    create_department_constraints(&mut pb, &columns, &possible_recipes);
+    create_number_constraints(&mut pb, &columns, min_recipes);
+    create_appeal_constraints(&mut pb, &columns, &possible_recipes, min_appeal);
 
     // Solve the problem. Returns the solution
-    let solution = model.solve();
-    let raw_solution = solution.raw().to_owned();
+    let solved = pb.optimise(Sense::Maximise).solve();
 
     // Check the solver finished and solution is proven optimal.
-    assert_eq!(Status::Finished, raw_solution.status());
-    assert!(raw_solution.is_proven_optimal());
+    assert_eq!(solved.status(), HighsModelStatus::Optimal);
 
-    columns
+    let solution = solved.get_solution();
+
+    let recipes: Vec<_> = solution
+        .columns()
         .iter()
-        .zip(possible_recipes.iter())
-        .filter(|(column, _)| nearly_equal(solution.col(**column), 1., 1e-6))
+        .zip(possible_recipes)
+        .filter(|(value, _)| nearly_equal(**value, 1., 1e-6))
         .map(|(_, recipe)| recipe.clone())
-        .collect()
+        .collect();
+
+    recipes
 }
 
 pub fn recommend(possible_recipes: Vec<Recipe>, config: &RecommendConfig) -> Vec<Recipe> {
@@ -315,16 +325,16 @@ pub fn recommend(possible_recipes: Vec<Recipe>, config: &RecommendConfig) -> Vec
         &config.available_ingredients,
         config.utilisation,
         &config.potions,
-        &config.solver_loglevel,
     );
+
     let appeal = maximise_appeal(
         &possible_recipes,
         &config.available_ingredients,
         config.utilisation,
         &config.potions,
         recipe_count,
-        &config.solver_loglevel,
     );
+
     maximise_potency(
         &possible_recipes,
         &config.available_ingredients,
@@ -332,6 +342,5 @@ pub fn recommend(possible_recipes: Vec<Recipe>, config: &RecommendConfig) -> Vec
         &config.potions,
         recipe_count,
         appeal,
-        &config.solver_loglevel,
     )
 }

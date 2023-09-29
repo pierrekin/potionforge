@@ -59,10 +59,7 @@ fn display_results(recommendations: &[Recipe]) {
 /// ingredients.
 ///
 /// 3. Recommend a combination of recipes using the potionforge algorithm.
-pub fn recommend(
-    config_filename: String,
-    solver_loglevel: String,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn recommend(config_filename: String) -> Result<(), Box<dyn std::error::Error>> {
     println!("Recommend using config file: {}", config_filename);
     let config = load_config(config_filename)?;
 
@@ -85,7 +82,6 @@ pub fn recommend(
         available_ingredients: config.ingredients,
         utilisation: config.utilisation,
         potions: config.potions,
-        solver_loglevel,
     };
 
     println!("Enumerating possible recipes...");
