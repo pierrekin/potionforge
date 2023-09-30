@@ -1,3 +1,4 @@
+use std::io::{copy, Cursor};
 use std::{fs::File, io::Read};
 
 use crate::printer;
@@ -11,6 +12,8 @@ use potionforge::models::{PotionKindKey, Process, Recipe};
 use potionforge::recommend::{
     AlchemistAttributes, BrandingCounts, IngredientCounts, MarketConditions, RecommendConfig,
 };
+
+const EXAMPLE_CONFIG: &[u8] = include_bytes!("./recommend.yml.example");
 
 #[derive(Debug, Deserialize)]
 struct _RecommendConfig {
@@ -30,6 +33,15 @@ fn load_config(filename: String) -> Result<_RecommendConfig, Box<dyn std::error:
     let mut config_contents = String::new();
     config_file.read_to_string(&mut config_contents)?;
     Ok(serde_yaml::from_str(&config_contents)?)
+}
+
+fn write_example_config(filename: String) -> Result<(), Box<dyn std::error::Error>> {
+    let mut config_file = File::create(filename)?;
+    let mut cursor = Cursor::new(EXAMPLE_CONFIG);
+
+    copy(&mut cursor, &mut config_file)?;
+
+    Ok(())
 }
 
 /// Display some summary statistics and a table of recommendated recipes.
@@ -93,5 +105,11 @@ pub fn recommend(config_filename: String) -> Result<(), Box<dyn std::error::Erro
     let recommendations: Vec<Recipe> = core::recommend(possible_recipes, &recommend_config);
 
     display_results(&recommendations);
+    Ok(())
+}
+
+pub(crate) fn init_recommend(config: String) -> Result<(), Box<dyn std::error::Error>> {
+    write_example_config(config)?;
+
     Ok(())
 }
