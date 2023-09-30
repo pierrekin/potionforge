@@ -1,9 +1,9 @@
 use std::{fs::File, io::Read};
 
 use crate::printer;
+use potionforge::core;
 use potionforge::enumerate::EnumerateConfig;
 use potionforge::simulate::SimulateConfig;
-use potionforge::{enumerate, recommend};
 
 use serde::Deserialize;
 
@@ -86,11 +86,11 @@ pub fn recommend(config_filename: String) -> Result<(), Box<dyn std::error::Erro
 
     println!("Enumerating possible recipes...");
     let possible_recipes: Vec<Recipe> =
-        enumerate::enumerate_and_simulate(&enumerate_config, &simulate_config);
+        core::enumerate_and_simulate(&enumerate_config, &simulate_config);
 
     println!("Got {} possible recipes.", possible_recipes.len());
     println!("Recommending optimal recipes...");
-    let recommendations: Vec<Recipe> = recommend::recommend(possible_recipes, &recommend_config);
+    let recommendations: Vec<Recipe> = core::recommend(possible_recipes, &recommend_config);
 
     display_results(&recommendations);
     Ok(())

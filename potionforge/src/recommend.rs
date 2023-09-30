@@ -171,7 +171,7 @@ fn create_potency_objectives(possible_recipes: &[Recipe]) -> Vec<f64> {
         .collect_vec()
 }
 
-fn maximise_recipes(
+pub fn maximise_recipes(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
     utilisation: i32,
@@ -220,7 +220,7 @@ fn maximise_recipes(
     count as i32
 }
 
-fn maximise_appeal(
+pub fn maximise_appeal(
     possible_recipes: &Vec<Recipe>,
     available_ingredients: &IngredientCounts,
     utilisation: i32,
@@ -273,7 +273,7 @@ fn maximise_appeal(
     total_appeal as i32
 }
 
-fn maximise_potency(
+pub fn maximise_potency(
     possible_recipes: &[Recipe],
     available_ingredients: &HashMap<IngredientKey, i32>,
     utilisation: i32,
@@ -326,30 +326,4 @@ fn maximise_potency(
         .collect();
 
     recipes
-}
-
-pub fn recommend(possible_recipes: Vec<Recipe>, config: &RecommendConfig) -> Vec<Recipe> {
-    let recipe_count = maximise_recipes(
-        &possible_recipes,
-        &config.available_ingredients,
-        config.utilisation,
-        &config.potions,
-    );
-
-    let appeal = maximise_appeal(
-        &possible_recipes,
-        &config.available_ingredients,
-        config.utilisation,
-        &config.potions,
-        recipe_count,
-    );
-
-    maximise_potency(
-        &possible_recipes,
-        &config.available_ingredients,
-        config.utilisation,
-        &config.potions,
-        recipe_count,
-        appeal,
-    )
 }
