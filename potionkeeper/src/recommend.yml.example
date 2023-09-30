@@ -10,9 +10,9 @@ processes:
   # - Infuse
 
 ingredients:
-  # Pluteus: 1
-  # Thyme: 1
-  # Sage: 1
+  Pluteus: 1
+  Thyme: 1
+  Sage: 1
   # Anise: 1
   # Catnip: 1
   # Deadmans: 1
@@ -34,6 +34,7 @@ alchemists:
   Herbalist: 0
   Optimiser: 0
   Acclaimed: 0
+  # Enchanter: 0
 
 branding:
   Bulk: 0
