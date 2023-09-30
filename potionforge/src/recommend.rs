@@ -200,8 +200,11 @@ fn maximise_recipes(
     create_potion_kind_constraints(&mut pb, &columns, &possible_recipes, &potions);
     create_department_constraints(&mut pb, &columns, &possible_recipes);
 
+    // Create a Highs model to be optimised.
+    let model = pb.optimise(Sense::Maximise);
+
     // Solve the problem. Returns the solution
-    let solved = pb.optimise(Sense::Maximise).solve();
+    let solved = model.solve();
 
     // Check the solver finished and solution is proven optimal.
     assert_eq!(solved.status(), HighsModelStatus::Optimal);
@@ -248,8 +251,11 @@ fn maximise_appeal(
     create_department_constraints(&mut pb, &columns, &possible_recipes);
     create_number_constraints(&mut pb, &columns, min_recipes);
 
+    // Create a Highs model to be optimised.
+    let model = pb.optimise(Sense::Maximise);
+
     // Solve the problem. Returns the solution
-    let solved = pb.optimise(Sense::Maximise).solve();
+    let solved = model.solve();
 
     // Check the solver finished and solution is proven optimal.
     assert_eq!(solved.status(), HighsModelStatus::Optimal);
@@ -300,8 +306,11 @@ fn maximise_potency(
     create_number_constraints(&mut pb, &columns, min_recipes);
     create_appeal_constraints(&mut pb, &columns, &possible_recipes, min_appeal);
 
+    // Create a Highs model to be optimised.
+    let model = pb.optimise(Sense::Maximise);
+
     // Solve the problem. Returns the solution
-    let solved = pb.optimise(Sense::Maximise).solve();
+    let solved = model.solve();
 
     // Check the solver finished and solution is proven optimal.
     assert_eq!(solved.status(), HighsModelStatus::Optimal);
