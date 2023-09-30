@@ -1,2 +1,2 @@
 [workspace]
-members = ["potionforge", "potionkeeper"]
+members = ["potionforge", "potionkeeper", "potionserpent"]
