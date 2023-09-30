@@ -20,39 +20,46 @@ pub fn enumerate_and_simulate(
         .iter()
         .map(|key| INGREDIENTS.get_by_key(key))
         .collect();
+
     let all_ingredients =
         permute_ingredients(raw_ingredients.as_slice(), &enumerate_config.processes);
 
     (2..=enumerate_config.arcane_power)
         .into_par_iter()
         .flat_map(|k| {
-            all_ingredients
+            let combinations: Vec<Vec<Ingredient>> = all_ingredients
                 .iter()
                 .combinations(k as usize)
-                .collect::<Vec<_>>()
-                .into_par_iter()
-                .filter_map(|combination| {
-                    let local_combination = combination.into_iter().cloned().collect();
-                    if !is_combination_valid(&local_combination) {
-                        return None;
-                    }
-                    if !is_combination_reasonable(&local_combination) {
-                        return None;
-                    }
-                    let recipe = simulate::simulate(local_combination.as_slice(), &simulate_config);
-                    if recipe.is_none() {
-                        return None;
-                    }
+                .map(|combo| combo.iter().map(|&ingredient| ingredient.clone()).collect())
+                .collect();
+            let filtered_combinations = filter_combinations(combinations);
+            simulate_combinations(&filtered_combinations, simulate_config)
+        })
+        .collect()
+}
 
-                    let recipe = recipe.unwrap();
+pub fn filter_combinations(combinations: Vec<Vec<Ingredient>>) -> Vec<Vec<Ingredient>> {
+    combinations
+        .into_iter()
+        .filter(|combination| {
+            is_combination_valid(combination) && is_combination_reasonable(combination)
+        })
+        .collect()
+}
 
-                    if !is_recipe_reasonable(&recipe) {
-                        return None;
-                    }
-
-                    Some(recipe)
-                })
-                .collect::<Vec<_>>()
+pub fn simulate_combinations(
+    combinations: &Vec<Vec<Ingredient>>,
+    simulate_config: &SimulateConfig,
+) -> Vec<Recipe> {
+    combinations
+        .into_par_iter()
+        .filter_map(|combination| {
+            let local_combination: Vec<_> = combination.into_iter().cloned().collect();
+            let recipe = simulate::simulate(local_combination.as_slice(), &simulate_config)?;
+            if !is_recipe_reasonable(&recipe) {
+                return None;
+            }
+            Some(recipe)
         })
         .collect()
 }
@@ -102,7 +109,7 @@ fn is_combination_valid(combination: &Vec<Ingredient>) -> bool {
 
 fn is_combination_reasonable(combination: &Vec<Ingredient>) -> bool {
     // If any ingredient contains an impurity.
-    let parts = collect_parts(&combination);
+    let parts = collect_parts(combination.as_slice());
     return !parts.contains(&IngredientPart::Impurity);
 }
 
