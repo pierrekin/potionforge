@@ -21,6 +21,31 @@ pub enum IngredientKey {
     Asporeus,
     Stinkhorn,
 }
+
+impl ToHumanReadable for IngredientKey {
+    fn to_human(&self) -> String {
+        match self {
+            IngredientKey::Catnip => "Catnip",
+            IngredientKey::Lupine => "Lupine",
+            IngredientKey::Mandrake => "Mandrake",
+            IngredientKey::Nightshade => "Nightshade",
+            IngredientKey::Sage => "Sage",
+            IngredientKey::Thyme => "Thyme",
+            IngredientKey::Wormwood => "Wormwood",
+            IngredientKey::Anise => "Anise",
+            IngredientKey::Deadmans => "Deadmans",
+            IngredientKey::Deathcap => "Deathcap",
+            IngredientKey::Elven => "Elven",
+            IngredientKey::Flyagaric => "Flyagaric",
+            IngredientKey::Pluteus => "Pluteus",
+            IngredientKey::Wizards => "Wizards",
+            IngredientKey::Asporeus => "Asporeus",
+            IngredientKey::Stinkhorn => "Stinkhorn",
+        }
+        .to_string()
+    }
+}
+
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum IngredientPart {
     MainEffect(MainEffect),
@@ -96,10 +121,49 @@ impl From<IngredientPart> for Element {
     }
 }
 
+impl ToHumanReadable for IngredientPart {
+    fn to_human(&self) -> String {
+        match self {
+            // Main effect
+            IngredientPart::MainEffect(MainEffect::Cat) => "Cat",
+            IngredientPart::MainEffect(MainEffect::Bone) => "Bone",
+            IngredientPart::MainEffect(MainEffect::Soul) => "Soul",
+            IngredientPart::MainEffect(MainEffect::Beast) => "Beast",
+            // Purity
+            IngredientPart::Stimulant => "Stimulant",
+            IngredientPart::Impurity => "Impurity",
+            // Toxicity
+            IngredientPart::Toxin => "Toxin",
+            IngredientPart::Antitoxin => "Antitoxin",
+            // Element
+            IngredientPart::Element(Element::Fire) => "Fire",
+            IngredientPart::Element(Element::Aether) => "Aether",
+            IngredientPart::Element(Element::Water) => "Water",
+            IngredientPart::Element(Element::Earth) => "Earth",
+            // Taste
+            IngredientPart::Taste(Taste::Sweetness(Sweetness::Bitter)) => "Bitter",
+            IngredientPart::Taste(Taste::Sweetness(Sweetness::Sweet)) => "Sweet",
+            IngredientPart::Taste(Taste::Tastiness(Tastiness::Tasty)) => "Tasty",
+            IngredientPart::Taste(Taste::Tastiness(Tastiness::Unsavory)) => "Unsavory",
+        }
+        .to_string()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Ord, PartialOrd, Eq, Hash)]
 pub enum IngredientKind {
     Herb,
     Mushroom,
+}
+
+impl ToHumanReadable for IngredientKind {
+    fn to_human(&self) -> String {
+        match self {
+            IngredientKind::Herb => "Herb",
+            IngredientKind::Mushroom => "Mushroom",
+        }
+        .to_string()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -108,6 +172,12 @@ pub struct Ingredient {
     pub process: IngredientProcess,
     pub kind: IngredientKind,
     pub parts: IngredientParts,
+}
+
+impl ToHumanReadable for Ingredient {
+    fn to_human(&self) -> String {
+        format!("{} ({})", self.key.to_human(), self.process.to_human())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Ord, PartialOrd, Eq, Hash)]
@@ -161,6 +231,53 @@ pub enum IngredientParts {
     BlanchedFermentedInfused(IngredientPart, IngredientPart),
     DriedFermentedInfused(IngredientPart, IngredientPart),
     PickledFermentedInfused(IngredientPart, IngredientPart),
+}
+
+impl ToHumanReadable for IngredientParts {
+    fn to_human(&self) -> String {
+        let convert_full =
+            |a: &IngredientPart, b: &IngredientPart, c: &IngredientPart, d: &IngredientPart| {
+                format!(
+                    "({}, {}, {}, {})",
+                    a.to_human(),
+                    b.to_human(),
+                    c.to_human(),
+                    d.to_human()
+                )
+            };
+
+        let convert_partial = |a: &IngredientPart, b: &IngredientPart| {
+            format!("({}, {})", a.to_human(), b.to_human(),)
+        };
+
+        match self {
+            // Single processes
+            IngredientParts::Raw(a, b, c, d) => convert_full(a, b, c, d),
+            IngredientParts::Fermented(a, b, c, d) => convert_full(a, b, c, d),
+            IngredientParts::Infused(a, b, c, d) => convert_full(a, b, c, d),
+            IngredientParts::Crushed(a, b) => convert_partial(a, b),
+            IngredientParts::Blanched(a, b) => convert_partial(a, b),
+            IngredientParts::Dried(a, b) => convert_partial(a, b),
+            IngredientParts::Pickled(a, b) => convert_partial(a, b),
+            // Chained processes: Cut and then fermented
+            IngredientParts::CrushedFermented(a, b) => convert_partial(a, b),
+            IngredientParts::BlanchedFermented(a, b) => convert_partial(a, b),
+            IngredientParts::DriedFermented(a, b) => convert_partial(a, b),
+            IngredientParts::PickledFermented(a, b) => convert_partial(a, b),
+            // Chained processes: Cut and then infused
+            IngredientParts::CrushedInfused(a, b) => convert_partial(a, b),
+            IngredientParts::BlanchedInfused(a, b) => convert_partial(a, b),
+            IngredientParts::DriedInfused(a, b) => convert_partial(a, b),
+            IngredientParts::PickledInfused(a, b) => convert_partial(a, b),
+            // Chained processes: Fermented and then infused
+            IngredientParts::FermentedInfused(a, b, c, d) => convert_full(a, b, c, d),
+            // Chained processes: Cut, fermented, and then infused
+            IngredientParts::CrushedFermentedInfused(a, b) => convert_partial(a, b),
+            IngredientParts::BlanchedFermentedInfused(a, b) => convert_partial(a, b),
+            IngredientParts::DriedFermentedInfused(a, b) => convert_partial(a, b),
+            IngredientParts::PickledFermentedInfused(a, b) => convert_partial(a, b),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
