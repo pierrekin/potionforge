@@ -425,67 +425,15 @@ pub fn simulate(ingredients: &[Ingredient], simulate_config: &SimulateConfig) ->
 #[cfg(test)]
 mod tests {
     use crate::{
-        models::{traits::GetByKey, IngredientKey, PotionKindKey, INGREDIENTS},
         recommend::{AlchemistAttributes, MarketConditions},
+        testdata::INGREDIENT_COMBINATIONS,
     };
 
     use super::*;
 
     #[test]
     fn test_simulate() {
-        let test_cases = vec![
-            // Beast, Fire -> Vitality
-            (
-                vec![IngredientKey::Flyagaric, IngredientKey::Lupine],
-                PotionKindKey::Vitality,
-            ),
-            // (vec![IngredientKey::Flyagaric, IngredientKey::ElvenCrushed], PotionKindKey::Sleep),
-            // (vec![IngredientKey::Flyagaric, IngredientKey::WizardsHat], PotionKindKey::Summoning),
-            (
-                vec![IngredientKey::Flyagaric, IngredientKey::Deathcap],
-                PotionKindKey::Monster,
-            ),
-            // Cat
-            (
-                vec![IngredientKey::Catnip, IngredientKey::Lupine],
-                PotionKindKey::Speed,
-            ),
-            // (vec![IngredientKey::Catnip, IngredientKey::ElvenCrushed], PotionKindKey::Slow),
-            // (vec![IngredientKey::Catnip, IngredientKey::WizardsHat], PotionKindKey::Mana),
-            (
-                vec![IngredientKey::Catnip, IngredientKey::Deathcap],
-                PotionKindKey::Warding,
-            ),
-            // Bone
-            (
-                vec![IngredientKey::Anise, IngredientKey::Lupine],
-                PotionKindKey::Strength,
-            ),
-            // (vec![IngredientKey::Anise, IngredientKey::ElvenCrushed], PotionKindKey::Weakness),
-            // ( vec![IngredientKey::Anise, IngredientKey::Pluteus], PotionKindKey::Necromancy,),
-            (
-                vec![IngredientKey::Anise, IngredientKey::Deathcap],
-                PotionKindKey::Skeleton,
-            ),
-            // Soul, Fire -> Speech
-            (
-                vec![IngredientKey::Deadmans, IngredientKey::Lupine],
-                PotionKindKey::Speech,
-            ),
-            // ( vec![IngredientKey::Deadmans, IngredientKey::Elven], PotionKindKey::Silence,),
-            // (vec![IngredientKey::Deadmans, IngredientKey::WizardsHat], PotionKindKey::Conjuring),
-            (
-                vec![IngredientKey::Deadmans, IngredientKey::Deathcap],
-                PotionKindKey::Exorcism,
-            ),
-        ];
-
-        for (ingredient_keys, expected_potion) in test_cases {
-            let ingredients: Vec<Ingredient> = ingredient_keys
-                .iter()
-                .map(|&key| INGREDIENTS.get_by_key(&key).clone())
-                .collect();
-
+        for (ingredients, expected_potion) in INGREDIENT_COMBINATIONS.iter() {
             let simulate_config = SimulateConfig {
                 alchemists_attributes: AlchemistAttributes::new(),
                 market_conditions: MarketConditions::new(),
@@ -495,7 +443,7 @@ mod tests {
             assert!(result.is_some());
 
             let recipe = result.unwrap();
-            assert_eq!(recipe.potion_kind_key, expected_potion);
+            assert_eq!(recipe.potion_kind_key, *expected_potion);
         }
     }
 }

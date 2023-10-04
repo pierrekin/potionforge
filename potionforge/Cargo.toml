@@ -18,6 +18,7 @@ console = { version = "0.15", default-features = false, features = [
     "ansi-parsing",
 ] }
 highs = "1.5.1"
+lazy_static = "1.4"
 
 [dev-dependencies]
 criterion = "0.3"

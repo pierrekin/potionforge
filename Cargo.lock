@@ -736,6 +736,7 @@ dependencies = [
  "highs",
  "indicatif",
  "itertools",
+ "lazy_static",
  "rayon",
  "serde",
  "serde_yaml",
