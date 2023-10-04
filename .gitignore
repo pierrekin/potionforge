@@ -25,3 +25,5 @@ debug.yml
 # VS Code config file
 .vscode
 
+# PyEnv Local file
+.python-version
